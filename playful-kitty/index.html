@@ -146,7 +146,16 @@
 
 	<!-- ScorePoint SDK - يجب تحميله قبل c2runtime -->
 	<!-- Cache busting: غير الرقم عند تحديث الملف -->
-	<script src="/sdk/scorepoint.js?v=202501201"></script>
+	<!-- استخدام مسار مطلق للعمل من Cloudflare Pages -->
+	<script>
+		// تحديد URL الـ SDK تلقائياً
+		(function() {
+			const sdkUrl = window.location.hostname === 'sp.games' || window.location.hostname === 'new.sp.games' 
+				? '/sdk/scorepoint.js' 
+				: 'https://sp.games/sdk/scorepoint.js';
+			document.write('<script src="' + sdkUrl + '?v=202501201"><\/script>');
+		})();
+	</script>
 	
 	<!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
     This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
