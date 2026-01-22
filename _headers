@@ -1,4 +1,4 @@
 /*
   X-Frame-Options: ALLOWALL
   Content-Security-Policy: frame-ancestors *;
-  Permissions-Policy: accelerometer=*, gyroscope=*, magnetometer=*, deviceorientation=*, devicemotion=*;
+  Permissions-Policy: accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=();
