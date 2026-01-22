@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>ألعاب سكور بوينت - منصة الألعاب الرائدة</title>
+    <meta name="description" content="ألعاب سكور بوينت - منصة الألعاب الرائدة للتنافس والترفيه. العب، تنافس، واربح!">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="ألعاب سكور بوينت - منصة الألعاب الرائدة">
+    <meta property="og:description" content="العب، تنافس، واربح! أكثر من 600 لعبة تنتظرك">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sp.games">
+    
+    <style>
+        /* =====================================================
+           Reset & Base
+           ===================================================== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-dark: #0f0f1a;
+            --color-darker: #0a0a12;
+            --color-purple: #6c5ce7;
+            --color-purple-glow: rgba(108, 92, 231, 0.4);
+            --color-cyan: #00d9ff;
+            --color-white: #ffffff;
+            --color-gray: #a0a0a0;
+            --font-main: 'Segoe UI', Tahoma, Arial, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--color-darker);
+            color: var(--color-white);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* =====================================================
+           Background Effects
+           ===================================================== */
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.25;
+        }
+
+        .bg-glow-1 {
+            width: 50vw;
+            max-width: 500px;
+            height: 50vw;
+            max-height: 500px;
+            background: var(--color-purple);
+            top: -10%;
+            right: -10%;
+            -webkit-filter: blur(80px);
+            filter: blur(80px);
+            -webkit-animation: float 8s ease-in-out infinite;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .bg-glow-2 {
+            width: 40vw;
+            max-width: 350px;
+            height: 40vw;
+            max-height: 350px;
+            background: var(--color-cyan);
+            bottom: -5%;
+            left: -10%;
+            -webkit-filter: blur(60px);
+            filter: blur(60px);
+            -webkit-animation: float 6s ease-in-out infinite reverse;
+            animation: float 6s ease-in-out infinite reverse;
+        }
+
+        @-webkit-keyframes float {
+            0%, 100% { -webkit-transform: translateY(0); transform: translateY(0); }
+            50% { -webkit-transform: translateY(-20px); transform: translateY(-20px); }
+        }
+
+        @keyframes float {
+            0%, 100% { -webkit-transform: translateY(0); transform: translateY(0); }
+            50% { -webkit-transform: translateY(-20px); transform: translateY(-20px); }
+        }
+
+        /* Grid Pattern */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(108, 92, 231, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(108, 92, 231, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* =====================================================
+           Main Container
+           ===================================================== */
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            padding: 1.5rem;
+            padding-top: env(safe-area-inset-top, 1.5rem);
+            padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+        }
+
+        /* =====================================================
+           Logo Section
+           ===================================================== */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            -webkit-animation: fadeInDown 0.8s ease-out;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+            -webkit-animation: bounce 2s ease-in-out infinite;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @-webkit-keyframes bounce {
+            0%, 100% { -webkit-transform: translateY(0); transform: translateY(0); }
+            50% { -webkit-transform: translateY(-10px); transform: translateY(-10px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { -webkit-transform: translateY(0); transform: translateY(0); }
+            50% { -webkit-transform: translateY(-10px); transform: translateY(-10px); }
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 800;
+            background: -webkit-linear-gradient(315deg, var(--color-white) 0%, var(--color-purple) 50%, var(--color-cyan) 100%);
+            background: linear-gradient(135deg, var(--color-white) 0%, var(--color-purple) 50%, var(--color-cyan) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.3;
+        }
+
+        .tagline {
+            color: var(--color-gray);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        /* =====================================================
+           Cards Section
+           ===================================================== */
+        .cards-section {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            gap: 1.25rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .card {
+            display: block;
+            background: -webkit-linear-gradient(305deg, rgba(26, 26, 46, 0.9), rgba(15, 15, 26, 0.95));
+            background: linear-gradient(145deg, rgba(26, 26, 46, 0.9), rgba(15, 15, 26, 0.95));
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            -webkit-transition: all 0.3s ease;
+            -o-transition: all 0.3s ease;
+            transition: all 0.3s ease;
+            -webkit-animation: fadeInUp 0.8s ease-out both;
+            animation: fadeInUp 0.8s ease-out both;
+        }
+
+        .card:nth-child(1) {
+            -webkit-animation-delay: 0.2s;
+            animation-delay: 0.2s;
+        }
+
+        .card:nth-child(2) {
+            -webkit-animation-delay: 0.35s;
+            animation-delay: 0.35s;
+        }
+
+        .card:hover,
+        .card:focus {
+            -webkit-transform: translateY(-5px);
+            -ms-transform: translateY(-5px);
+            transform: translateY(-5px);
+            border-color: var(--color-purple);
+            -webkit-box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 40px var(--color-purple-glow);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 40px var(--color-purple-glow);
+        }
+
+        .card:focus {
+            outline: 2px solid var(--color-purple);
+            outline-offset: 2px;
+        }
+
+        .card-icon {
+            font-size: 2.75rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--color-white);
+        }
+
+        .card-description {
+            color: var(--color-gray);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .card-btn {
+            display: -webkit-inline-box;
+            display: -ms-inline-flexbox;
+            display: inline-flex;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: -webkit-linear-gradient(315deg, var(--color-purple) 0%, #5a4dd4 100%);
+            background: linear-gradient(135deg, var(--color-purple) 0%, #5a4dd4 100%);
+            color: var(--color-white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .card-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Scoreland Card */
+        .card-scoreland:hover,
+        .card-scoreland:focus {
+            border-color: var(--color-cyan);
+            -webkit-box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 217, 255, 0.3);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 217, 255, 0.3);
+        }
+
+        .card-scoreland .card-btn {
+            background: -webkit-linear-gradient(315deg, #0088cc 0%, var(--color-cyan) 100%);
+            background: linear-gradient(135deg, #0088cc 0%, var(--color-cyan) 100%);
+        }
+
+        /* =====================================================
+           Stats Section
+           ===================================================== */
+        .stats-section {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            -webkit-animation: fadeIn 0.8s ease-out 0.5s both;
+            animation: fadeIn 0.8s ease-out 0.5s both;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: -webkit-linear-gradient(315deg, var(--color-purple), var(--color-cyan));
+            background: linear-gradient(135deg, var(--color-purple), var(--color-cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--color-gray);
+            font-size: 0.75rem;
+            margin-top: 0.15rem;
+        }
+
+        /* =====================================================
+           Footer
+           ===================================================== */
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--color-gray);
+            font-size: 0.8rem;
+            -webkit-animation: fadeIn 0.8s ease-out 0.6s both;
+            animation: fadeIn 0.8s ease-out 0.6s both;
+        }
+
+        .footer a {
+            color: var(--color-purple);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* =====================================================
+           Animations
+           ===================================================== */
+        @-webkit-keyframes fadeInDown {
+            from {
+                opacity: 0;
+                -webkit-transform: translateY(-20px);
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                -webkit-transform: translateY(0);
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                -webkit-transform: translateY(-20px);
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                -webkit-transform: translateY(0);
+                transform: translateY(0);
+            }
+        }
+
+        @-webkit-keyframes fadeInUp {
+            from {
+                opacity: 0;
+                -webkit-transform: translateY(20px);
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                -webkit-transform: translateY(0);
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                -webkit-transform: translateY(20px);
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                -webkit-transform: translateY(0);
+                transform: translateY(0);
+            }
+        }
+
+        @-webkit-keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* =====================================================
+           RESPONSIVE - Tablets (768px+)
+           ===================================================== */
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+
+            .logo-section {
+                margin-bottom: 2.5rem;
+            }
+
+            .logo-icon {
+                font-size: 5rem;
+            }
+
+            .logo-text {
+                font-size: 3rem;
+            }
+
+            .tagline {
+                font-size: 1.1rem;
+                letter-spacing: 2px;
+            }
+
+            .cards-section {
+                -webkit-box-orient: horizontal;
+                -webkit-box-direction: normal;
+                -ms-flex-direction: row;
+                flex-direction: row;
+                gap: 1.5rem;
+                max-width: 800px;
+            }
+
+            .card {
+                -webkit-box-flex: 1;
+                -ms-flex: 1;
+                flex: 1;
+                padding: 2rem 1.5rem;
+            }
+
+            .card-icon {
+                font-size: 3.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            .card-description {
+                font-size: 0.9rem;
+            }
+
+            .card-btn {
+                padding: 0.875rem 1.75rem;
+                font-size: 0.95rem;
+            }
+
+            .stats-section {
+                gap: 3rem;
+                margin-top: 2.5rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .stat-label {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* =====================================================
+           RESPONSIVE - Desktop (1024px+)
+           ===================================================== */
+        @media (min-width: 1024px) {
+            .logo-icon {
+                font-size: 5.5rem;
+            }
+
+            .logo-text {
+                font-size: 3.5rem;
+            }
+
+            .tagline {
+                font-size: 1.25rem;
+            }
+
+            .cards-section {
+                gap: 2rem;
+                max-width: 900px;
+            }
+
+            .card {
+                padding: 2.5rem 2rem;
+                border-radius: 24px;
+            }
+
+            .card:hover {
+                -webkit-transform: translateY(-10px) scale(1.02);
+                -ms-transform: translateY(-10px) scale(1.02);
+                transform: translateY(-10px) scale(1.02);
+            }
+
+            .card-icon {
+                font-size: 4rem;
+            }
+
+            .card-title {
+                font-size: 1.75rem;
+            }
+
+            .card-description {
+                font-size: 0.95rem;
+                line-height: 1.7;
+            }
+
+            .card-btn {
+                padding: 0.875rem 2rem;
+                font-size: 1rem;
+            }
+
+            .stats-section {
+                gap: 4rem;
+                margin-top: 3rem;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.9rem;
+            }
+
+            .footer {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* =====================================================
+           RESPONSIVE - Small phones (max 380px)
+           ===================================================== */
+        @media (max-width: 380px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .logo-icon {
+                font-size: 3rem;
+            }
+
+            .logo-text {
+                font-size: 1.6rem;
+            }
+
+            .tagline {
+                font-size: 0.85rem;
+            }
+
+            .card {
+                padding: 1.25rem;
+                border-radius: 16px;
+            }
+
+            .card-icon {
+                font-size: 2.25rem;
+            }
+
+            .card-title {
+                font-size: 1.15rem;
+            }
+
+            .card-description {
+                font-size: 0.8rem;
+            }
+
+            .card-btn {
+                padding: 0.65rem 1.25rem;
+                font-size: 0.85rem;
+            }
+
+            .stats-section {
+                gap: 1rem;
+            }
+
+            .stat-number {
+                font-size: 1.25rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .footer {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* =====================================================
+           Landscape phones - All sizes
+           ===================================================== */
+        @media (orientation: landscape) and (max-width: 900px) {
+            .container {
+                padding: 1rem 2rem;
+            }
+
+            .logo-section {
+                margin-bottom: 1.25rem;
+            }
+
+            .logo-icon {
+                font-size: 2.5rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .logo-text {
+                font-size: 1.75rem;
+            }
+
+            .tagline {
+                font-size: 0.85rem;
+                margin-top: 0.25rem;
+            }
+
+            .cards-section {
+                -webkit-box-orient: horizontal;
+                -webkit-box-direction: normal;
+                -ms-flex-direction: row;
+                flex-direction: row;
+                gap: 1.25rem;
+                max-width: 90%;
+            }
+
+            .card {
+                -webkit-box-flex: 1;
+                -ms-flex: 1;
+                flex: 1;
+                padding: 1.25rem;
+            }
+
+            .card-icon {
+                font-size: 2.25rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .card-title {
+                font-size: 1.1rem;
+                margin-bottom: 0.35rem;
+            }
+
+            .card-description {
+                font-size: 0.8rem;
+                line-height: 1.5;
+                margin-bottom: 0.75rem;
+            }
+
+            .card-btn {
+                padding: 0.6rem 1.25rem;
+                font-size: 0.85rem;
+            }
+
+            .stats-section {
+                margin-top: 1.25rem;
+                gap: 2.5rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .footer {
+                margin-top: 1.25rem;
+                font-size: 0.75rem;
+            }
+
+            .bg-glow-1 {
+                width: 250px;
+                height: 250px;
+            }
+
+            .bg-glow-2 {
+                width: 200px;
+                height: 200px;
+            }
+        }
+
+        /* Very short landscape (small phones) */
+        @media (orientation: landscape) and (max-height: 400px) {
+            .container {
+                -webkit-box-pack: start;
+                -ms-flex-pack: start;
+                justify-content: flex-start;
+                padding-top: 0.75rem;
+            }
+
+            .logo-section {
+                margin-bottom: 0.75rem;
+            }
+
+            .logo-icon {
+                font-size: 2rem;
+            }
+
+            .logo-text {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .card-description {
+                display: none;
+            }
+
+            .card-icon {
+                font-size: 2rem;
+                margin-bottom: 0.35rem;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .card-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .stats-section {
+                margin-top: 0.75rem;
+            }
+
+            .stat-number {
+                font-size: 1.25rem;
+            }
+
+            .footer {
+                margin-top: 0.75rem;
+            }
+
+            .bg-glow {
+                display: none;
+            }
+        }
+
+        /* =====================================================
+           Reduced Motion
+           ===================================================== */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                -webkit-animation-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                -webkit-transition-duration: 0.01ms !important;
+                -o-transition-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-effects">
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+    </div>
+    <div class="bg-grid"></div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <span class="logo-icon">🎮</span>
+            <h1 class="logo-text">ألعاب سكور بوينت</h1>
+            <p class="tagline">العب • تنافس • اربح</p>
+        </div>
+
+        <!-- Cards Section -->
+        <div class="cards-section">
+            <!-- Score Point Card -->
+            <a href="https://sp.games/" class="card card-scorepoint">
+                <span class="card-icon">🏆</span>
+                <h2 class="card-title">سكور بوينت</h2>
+                <p class="card-description">
+                    منصة الألعاب الرائدة! تنافس مع آلاف اللاعبين، اجمع النقاط، وتصدر قوائم المتصدرين.
+                </p>
+                <span class="card-btn">
+                    ابدأ اللعب
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </span>
+            </a>
+
+            <!-- Scoreland Card -->
+            <a href="https://sp.games/scoreland/" class="card card-scoreland">
+                <span class="card-icon">🌍</span>
+                <h2 class="card-title">سكوري لاند</h2>
+                <p class="card-description">
+                    عالم جديد من المغامرات! اكتشف ألعاب حصرية وتحديات فريدة في عالم سكوري لاند.
+                </p>
+                <span class="card-btn">
+                    اكتشف الآن
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </span>
+            </a>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="stat">
+                <div class="stat-number">+600</div>
+                <div class="stat-label">لعبة</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">+50K</div>
+                <div class="stat-label">لاعب</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">+1M</div>
+                <div class="stat-label">جلسة لعب</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            © 2026 <a href="https://sp.games">ألعاب سكور بوينت</a>. جميع الحقوق محفوظة
+        </div>
+    </div>
+</body>
+</html>
