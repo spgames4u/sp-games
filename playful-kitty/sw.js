@@ -279,6 +279,13 @@ self.addEventListener('install', event =>
 
 self.addEventListener('fetch', event =>
 {
+	// السماح بطلبات API بالمرور مباشرة دون اعتراض
+	const url = new URL(event.request.url);
+	if (url.pathname.startsWith('/api/') || url.hostname === 'new.sp.games' || url.hostname === 'sp.games') {
+		// السماح بطلبات API بالمرور مباشرة - لا تعترضها (لا تستدعي event.respondWith)
+		return;
+	}
+	
 	const isNavigateRequest = (event.request.mode === "navigate");
 	
 	let responsePromise = GetAvailableCacheNames()
@@ -312,7 +319,7 @@ self.addEventListener('fetch', event =>
 				console.log(CONSOLE_PREFIX + "Updating to new version");
 				
 				return Promise.all(availableCacheNames.slice(0, -1)
-									.map(c => caches.delete(c)))
+								.map(c => caches.delete(c)))
 				.then(() => latestCacheName);
 			});
 		}).then(useCacheName =>
