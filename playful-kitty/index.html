@@ -152,10 +152,14 @@
 		(function() {
 			const hostname = window.location.hostname;
 			// إذا كانت اللعبة على sp.games أو new.sp.games أو localhost، استخدم مسار نسبي
-			// وإلا استخدم مسار مطلق لـ sp.games
-			const sdkUrl = (hostname === 'sp.games' || hostname === 'new.sp.games' || hostname === 'localhost' || hostname === '127.0.0.1')
-				? '/sdk/scorepoint.js?v=202501201'
-				: 'https://sp.games/sdk/scorepoint.js?v=202501201';
+			// وإلا استخدم مسار مطلق - جرب new.sp.games أولاً (السيرفر الفعلي)
+			let sdkUrl;
+			if (hostname === 'sp.games' || hostname === 'new.sp.games' || hostname === 'localhost' || hostname === '127.0.0.1') {
+				sdkUrl = '/sdk/scorepoint.js?v=202501201';
+			} else {
+				// استخدام new.sp.games كـ domain افتراضي (السيرفر الفعلي)
+				sdkUrl = 'https://new.sp.games/sdk/scorepoint.js?v=202501201';
+			}
 			
 			// تحميل SDK بشكل متزامن
 			const script = document.createElement('script');
