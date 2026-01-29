@@ -129,8 +129,13 @@
     function showNotification(score) {
         if (window.innerWidth < 300) return;
         const div = document.createElement('div');
-        div.innerHTML = '🎉 رقم قياسي!<br><b>' + score.toLocaleString() + '</b>';
-        div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:rtl;';
+        // التحقق من اللغة
+        const lang = document.documentElement.lang || navigator.language || 'en';
+        const isArabic = lang.startsWith('ar');
+        const message = isArabic ? '🎉 رقم قياسي!' : '🎉 New High Score!';
+        const direction = isArabic ? 'rtl' : 'ltr';
+        div.innerHTML = message + '<br><b>' + score.toLocaleString() + '</b>';
+        div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + direction + ';';
         document.body.appendChild(div);
         setTimeout(() => div.remove(), 3500);
     }

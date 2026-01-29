@@ -75,8 +75,13 @@
     function showNotification(score) {
         if (window.innerWidth < 300) return;
         const div = document.createElement('div');
-        div.innerHTML = '🎉 رقم قياسي!<br><b>' + score.toLocaleString() + '</b>';
-        div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:rtl;';
+        // التحقق من اللغة
+        const lang = document.documentElement.lang || navigator.language || 'en';
+        const isArabic = lang.startsWith('ar');
+        const message = isArabic ? '🎉 رقم قياسي!' : '🎉 New High Score!';
+        const direction = isArabic ? 'rtl' : 'ltr';
+        div.innerHTML = message + '<br><b>' + score.toLocaleString() + '</b>';
+        div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + direction + ';';
         document.body.appendChild(div);
         setTimeout(() => div.remove(), 3500);
     }
@@ -84,8 +89,8 @@
     // حفظ الدالة الأصلية
     const originalCtlArcadeSaveScore = window.ctlArcadeSaveScore;
     
-    // استبدال ctlArcadeSaveScore
-    window.ctlArcadeSaveScore = function(iScore) {
+    // دالة جديدة لاستبدال ctlArcadeSaveScore
+    function newCtlArcadeSaveScore(iScore) {
         log('🎯 ctlArcadeSaveScore called with score:', iScore);
         
         // إرسال للـ API الجديد
@@ -103,7 +108,43 @@
         if (window.parent !== window && window.parent.__ctlArcadeSaveScore) {
             window.parent.__ctlArcadeSaveScore({ score: iScore });
         }
-    };
+    }
+    
+    // استبدال ctlArcadeSaveScore فوراً
+    window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
+    
+    // حماية الدالة من إعادة التعريف باستخدام Object.defineProperty
+    try {
+        Object.defineProperty(window, 'ctlArcadeSaveScore', {
+            value: newCtlArcadeSaveScore,
+            writable: false,
+            configurable: false
+        });
+    } catch (e) {
+        // إذا فشل، نستخدم الطريقة العادية
+        log('⚠️ Could not protect ctlArcadeSaveScore, using normal assignment');
+    }
+    
+    // إعادة استبدال الدالة بعد تحميل c2runtime.js
+    function reinstallHandler() {
+        if (window.ctlArcadeSaveScore !== newCtlArcadeSaveScore) {
+            log('🔄 Reinstalling ctlArcadeSaveScore handler');
+            try {
+                Object.defineProperty(window, 'ctlArcadeSaveScore', {
+                    value: newCtlArcadeSaveScore,
+                    writable: false,
+                    configurable: false
+                });
+            } catch (e) {
+                window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
+            }
+        }
+    }
+    
+    // مراقبة أي محاولات لإعادة التعريف
+    const handlerInterval = setInterval(() => {
+        reinstallHandler();
+    }, 100);
     
     async function init() {
         log('Initializing...');
@@ -113,6 +154,14 @@
             if (document.readyState === 'complete') r();
             else window.addEventListener('load', r);
         });
+        
+        // إعادة استبدال بعد تحميل الصفحة
+        setTimeout(() => {
+            reinstallHandler();
+            clearInterval(handlerInterval);
+            // مراقبة دورية كل ثانية بعد التحميل
+            setInterval(reinstallHandler, 1000);
+        }, 2000);
         
         log('✅ Ready! Listening for ctlArcadeSaveScore calls');
     }

@@ -85,15 +85,15 @@
 	<!-- Construct 2 exported games require jQuery. -->
 	<script src="jquery-2.1.1.min.js"></script>
 
+	<!-- sp-score.js - يجب تحميله قبل c2runtime.js لضمان استبدال ctlArcadeSaveScore -->
+	<script src="sp-score.js"></script>
+	
+	<!-- c2ctl.js - مطلوب من c2runtime.js (فارغ، sp-score.js يتولى الوظائف) -->
+	<script src="c2ctl.js"></script>
+
 	<!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
     This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
 	<script src="c2runtime.js"></script>
-	
-	<!-- c2ctl.js - الدوال الأساسية لـ Construct 2 -->
-	<script src="c2ctl.js"></script>
-	
-	<!-- sp-score.js - النظام الجديد لحفظ النتائج -->
-	<script src="sp-score.js"></script>
 
     <script>
 		// حذف Service Worker Cache عند التطوير
