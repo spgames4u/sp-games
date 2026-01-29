@@ -10,7 +10,10 @@
         apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
             ? 'http://localhost:4000/api/games/save-score'
             : 'https://new.sp.games/api/games/save-score',
-        gameSlug: location.pathname.split('/').filter(Boolean)[0] || 'unknown',
+        gameSlug: (() => {
+            const parts = location.pathname.split('/').filter(Boolean);
+            return parts[0] === 'games' ? (parts[1] || 'unknown') : (parts[0] || 'unknown');
+        })(),
         pollInterval: 2000,
         minScore: 1,
         debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
