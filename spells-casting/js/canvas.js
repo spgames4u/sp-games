@@ -37,7 +37,7 @@ var buttonSettings, buttonFullscreen, buttonSoundOn, buttonSoundOff, buttonMusic
 $.share = {};
 
 var sceneContainer, ghoulContainer, drawingContainer, wandContainer;
-var background, strokeAnimate, wizardData, wizardAnimate, wizardHit, ghoulData, ghoulAnime, txtScore, wand, instructionTxt,  result, resultScoreTxt, resultScoreShadowTxt, resultTitleTxt, resultTitleShadowTxt;
+var background, strokeAnimate, wizardData, wizardAnimate, wizardHit, ghoulData, ghoulAnime, txtScore, wand, instructionTxt,  result, resultScoreTxt, resultScoreShadowTxt, resultTitleTxt, resultTitleShadowTxt, saveStatusTxt, saveStatusShadowTxt;
 var confirmMessageTxt;
 $.symbols={};
 $.colours={};
@@ -199,6 +199,27 @@ function buildGameCanvas(){
 	resultScoreShadowTxt.x = resultScoreTxt.x;
 	resultScoreShadowTxt.y = resultScoreTxt.y + 8;
 	
+	// Save status text (جاري الحفظ... / تم الحفظ بنجاح)
+	saveStatusTxt = new createjs.Text();
+	saveStatusTxt.font = "30px cardenio_modernbold";
+	saveStatusTxt.color = "#84C441";
+	saveStatusTxt.textAlign = "center";
+	saveStatusTxt.textBaseline='alphabetic';
+	saveStatusTxt.x = canvasW/2;
+	saveStatusTxt.y = resultScoreTxt.y + 120;
+	saveStatusTxt.text = '';
+	saveStatusTxt.visible = false;
+	
+	saveStatusShadowTxt = new createjs.Text();
+	saveStatusShadowTxt.font = "30px cardenio_modernbold";
+	saveStatusShadowTxt.color = "#fff";
+	saveStatusShadowTxt.textAlign = "center";
+	saveStatusShadowTxt.textBaseline='alphabetic';
+	saveStatusShadowTxt.x = saveStatusTxt.x;
+	saveStatusShadowTxt.y = saveStatusTxt.y + 4;
+	saveStatusShadowTxt.text = '';
+	saveStatusShadowTxt.visible = false;
+	
 	shareContainer.x = shareSaveContainer.x = canvasW/2;
     shareContainer.y = shareSaveContainer.y = canvasH/100 * 70;
 
@@ -312,7 +333,7 @@ function buildGameCanvas(){
 	}
 	
 	gameContainer.addChild(txtScore, wandContainer, instructionTxt);
-	resultContainer.addChild(result, resultScoreShadowTxt, resultScoreTxt, resultTitleShadowTxt, resultTitleTxt, shareContainer, shareSaveContainer);
+	resultContainer.addChild(result, resultScoreShadowTxt, resultScoreTxt, resultTitleShadowTxt, resultTitleTxt, saveStatusShadowTxt, saveStatusTxt, shareContainer, shareSaveContainer);
 	
 	canvasContainer.addChild(background, sceneContainer, mainContainer, gameContainer, resultContainer, strokeAnimate, drawingContainer, exitContainer, optionsContainer, buttonSettings, guideline);
 	stage.addChild(canvasContainer);

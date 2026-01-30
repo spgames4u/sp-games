@@ -402,6 +402,17 @@
                         }, '*');
                     }
                     
+                    // إرسال event للعبة لإظهار حالة الحفظ
+                    const saveEvent = new CustomEvent('spScoreSaved', {
+                        detail: {
+                            success: true,
+                            score: score,
+                            newHighScore: result.newHighScore || false,
+                            result: result
+                        }
+                    });
+                    window.dispatchEvent(saveEvent);
+                    
                     if (result.newHighScore) showNotification(score);
                     return true;
                 } else {
@@ -417,6 +428,16 @@
                     
                     // Consume nonce (don't reuse failed nonce)
                     currentNonce = null;
+                    
+                    // إرسال event للعبة لإظهار حالة الفشل
+                    const saveEvent = new CustomEvent('spScoreSaved', {
+                        detail: {
+                            success: false,
+                            score: score,
+                            error: result.error || 'save_failed_try_again'
+                        }
+                    });
+                    window.dispatchEvent(saveEvent);
                     
                     // Clean old failed attempts (older than 5 minutes)
                     const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
@@ -436,6 +457,16 @@
                 lastFailedScore = score;
                 lastFailedTime = Date.now();
                 currentNonce = null; // Consume nonce
+                
+                // إرسال event للعبة لإظهار حالة الفشل
+                const saveEvent = new CustomEvent('spScoreSaved', {
+                    detail: {
+                        success: false,
+                        score: score,
+                        error: 'HTTP_ERROR'
+                    }
+                });
+                window.dispatchEvent(saveEvent);
             }
         } catch (e) {
             log('❌ Error:', e.message);
@@ -446,6 +477,16 @@
             lastFailedScore = score;
             lastFailedTime = Date.now();
             currentNonce = null; // Consume nonce
+            
+            // إرسال event للعبة لإظهار حالة الفشل
+            const saveEvent = new CustomEvent('spScoreSaved', {
+                detail: {
+                    success: false,
+                    score: score,
+                    error: 'NETWORK_ERROR'
+                }
+            });
+            window.dispatchEvent(saveEvent);
         } finally {
             isSending = false;
         }
@@ -564,7 +605,9 @@
         if (typeof window.saveGame === 'function') {
             originalSaveGame = window.saveGame;
             window.saveGame = newSaveGame;
-            log('✅ Intercepted saveGame function');
+            if (CONFIG.debug) {
+                log('✅ Intercepted saveGame function');
+            }
         } else {
             // إذا لم تكن موجودة، نراقب تعريفها
             let checkCount = 0;
@@ -573,11 +616,15 @@
                 if (typeof window.saveGame === 'function' && !originalSaveGame) {
                     originalSaveGame = window.saveGame;
                     window.saveGame = newSaveGame;
-                    log('✅ Intercepted saveGame function (delayed)');
+                    if (CONFIG.debug) {
+                        log('✅ Intercepted saveGame function (delayed)');
+                    }
                     clearInterval(checkInterval);
                 } else if (checkCount > 50) { // بعد 5 ثواني
                     clearInterval(checkInterval);
-                    log('⚠️ saveGame function not found, using polling only');
+                    if (CONFIG.debug) {
+                        log('⚠️ saveGame function not found, using polling only');
+                    }
                 }
             }, 100);
         }
@@ -589,19 +636,27 @@
                 set: (val) => {
                     if (val !== newSaveGame) {
                         originalSaveGame = val;
-                        log('⚠️ saveGame redefined, updating original');
+                        if (CONFIG.debug) {
+                            log('⚠️ saveGame redefined, updating original');
+                        }
                     }
                 },
                 configurable: true
             });
         } catch (e) {
-            log('⚠️ Could not protect saveGame, using normal assignment');
+            // صامت - لا حاجة لإظهار رسالة للمستخدم
+            if (CONFIG.debug) {
+                console.debug('[SP-Score-CreateJS] Could not protect saveGame, using normal assignment');
+            }
         }
         
         // بدء الـ polling (كحل احتياطي)
         pollIntervalId = setInterval(poll, 3000);
         
-        log('✅ Ready! Listening for saveGame calls with Anti-Cheat');
+        // رسالة التهيئة تظهر فقط في وضع debug
+        if (CONFIG.debug) {
+            log('✅ Ready! Listening for saveGame calls with Anti-Cheat');
+        }
     }
     
     init();

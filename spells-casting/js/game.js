@@ -299,6 +299,15 @@ function goPage(page){
 			playSound('soundFail');
 			resultScoreTxt.text = resultScoreShadowTxt.text = scoreDisplay.replace('[NUMBER]', playerData.score);
 			
+			// إظهار حالة الحفظ
+			if (typeof saveStatusTxt !== 'undefined' && saveStatusTxt) {
+				const lang = document.documentElement.lang || navigator.language || 'en';
+				const isArabic = lang.startsWith('ar');
+				saveStatusTxt.text = saveStatusShadowTxt.text = isArabic ? 'جاري حفظ النتيجة...' : 'Saving score...';
+				saveStatusTxt.color = '#FDB514'; // أصفر (جاري)
+				saveStatusTxt.visible = saveStatusShadowTxt.visible = true;
+			}
+			
 			stopGame();
 			saveGame(playerData.score);
 			toggleBackground(false);
@@ -390,6 +399,40 @@ function saveGame(score){
           console.log(result);
       }
     });*/
+	
+	// الاستماع لحدث حفظ السكور من sp-score.js
+	window.addEventListener('spScoreSaved', function(e) {
+		const detail = e.detail;
+		if (typeof saveStatusTxt !== 'undefined' && saveStatusTxt) {
+			const lang = document.documentElement.lang || navigator.language || 'en';
+			const isArabic = lang.startsWith('ar');
+			
+			if (detail.success) {
+				// نجح الحفظ
+				if (detail.newHighScore) {
+					saveStatusTxt.text = saveStatusShadowTxt.text = isArabic ? '🎉 تم حفظ رقمك القياسي!' : '🎉 High score saved!';
+					saveStatusTxt.color = '#84C441'; // أخضر
+				} else {
+					saveStatusTxt.text = saveStatusShadowTxt.text = isArabic ? '✅ تم حفظ النتيجة' : '✅ Score saved';
+					saveStatusTxt.color = '#84C441'; // أخضر
+				}
+			} else {
+				// فشل الحفظ
+				saveStatusTxt.text = saveStatusShadowTxt.text = isArabic ? '⚠️ فشل الحفظ، جاري إعادة المحاولة...' : '⚠️ Save failed, retrying...';
+				saveStatusTxt.color = '#ED1F24'; // أحمر
+			}
+			saveStatusTxt.visible = saveStatusShadowTxt.visible = true;
+			
+			// إخفاء الرسالة بعد 5 ثواني (في حالة النجاح)
+			if (detail.success) {
+				setTimeout(function() {
+					if (saveStatusTxt && saveStatusTxt.visible) {
+						saveStatusTxt.visible = saveStatusShadowTxt.visible = false;
+					}
+				}, 5000);
+			}
+		}
+	}, { once: false });
 }
 
 /*!
