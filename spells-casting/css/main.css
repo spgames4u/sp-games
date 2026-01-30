@@ -1,0 +1,36 @@
+/* Base style
+   ========================================================================== */
+   
+/* Fonts */
+@font-face {
+    font-family: 'cardenio_modernbold';
+    src: url('fonts/cardenio_modern_bold-webfont.woff2') format('woff2'),
+         url('fonts/cardenio_modern_bold-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+html{ -webkit-user-select: none; -ms-user-select: none; user-select: none; background:#473D7F;}
+
+/*-- Percent Loader -- */
+#mainLoader{position:absolute;z-index:5; display:none; font-size:30px; line-height:30px; color:#fff; text-align:center; width:100%; font-family:'cardenio_modernbold';}
+
+/*-- Content Wrapper -- */
+#mainHolder{position:absolute; width:100%;height:100%;}
+
+/*-- Browser Not Support -- */
+#notSupportHolder{ width:90%; margin:5% auto; position:relative; color:#FFF; text-align:center; font-size:25px; font-family:'cardenio_modernbold'; display:none;}
+
+/*-- Mobile Rotate Instruction -- */
+#rotateHolder{position:absolute;width:100%;height:100%;background-color:#473D7F;z-index:1000; display:none;}
+.mobileRotate{width:200px;height:auto;position:absolute;text-align:center;}
+.rotateImg{-webkit-animation:spin .5s linear infinite; -moz-animation:spin .5s linear infinite; animation:spin .5s linear infinite; margin-bottom:10px;}
+.rotateDesc{color:#fff; font-size:15px; line-height:15px; font-family:'cardenio_modernbold';}
+
+@-moz-keyframes spin { 50% { -moz-transform: rotate(0deg); } 100% { -moz-transform: rotate(0deg); } }
+@-webkit-keyframes spin { 50% { -webkit-transform: rotate(90deg); } 100% { -webkit-transform: rotate(0deg); } }
+@keyframes spin { 50% { -webkit-transform: rotate(90deg); transform:rotate(90deg); } 100% { -webkit-transform: rotate(90deg); transform:rotate(90deg); } }
+
+/*-- Canvas Wrapper -- */
+#canvasHolder{ display:none; width:100%; max-width:1280px; height:100%; margin:auto; position:relative;}
+canvas{ position:fixed;}
