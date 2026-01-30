@@ -6,6 +6,8 @@
  * يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API مع نظام Anti-Cheat
  */
 
+console.log('🔥 SP-SCORE.JS LOADED!');
+
 (function() {
     'use strict';
     
@@ -24,7 +26,7 @@
         })(),
         minScore: 1,
         cooldownMs: 30000, // 30 ثانية
-        debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+        debug: true
     };
     
     let lastSentScore = 0;
