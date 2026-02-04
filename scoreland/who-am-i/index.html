@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>من أنا؟ - Who Am I?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- شاشة الانتظار -->
+        <div id="loadingScreen" class="screen active">
+            <div class="loader"></div>
+            <p id="loadingText">جاري التحميل...</p>
+        </div>
+
+        <!-- شاشة اللعب -->
+        <div id="gameScreen" class="screen">
+            <!-- التلميحات -->
+            <div class="hints-container">
+                <div class="hint-card" id="hint1">
+                    <span class="hint-number">1</span>
+                    <span class="hint-text" id="hint1Text">؟؟؟</span>
+                </div>
+                <div class="hint-card locked" id="hint2">
+                    <span class="hint-number">2</span>
+                    <span class="hint-text" id="hint2Text">🔒</span>
+                </div>
+                <div class="hint-card locked" id="hint3">
+                    <span class="hint-number">3</span>
+                    <span class="hint-text" id="hint3Text">🔒</span>
+                </div>
+            </div>
+
+            <!-- زر كشف التلميح -->
+            <button id="revealHintBtn" class="reveal-btn" onclick="revealNextHint()">
+                <span>💡</span>
+                <span id="revealBtnText">كشف تلميح</span>
+            </button>
+
+            <!-- حقل الإجابة -->
+            <div class="answer-section">
+                <div class="answer-input-container">
+                    <input type="text" id="answerInput" placeholder="اكتب إجابتك هنا..." autocomplete="off">
+                    <button id="submitBtn" onclick="submitAnswer()">
+                        <span>✓</span>
+                    </button>
+                </div>
+                <p class="answer-hint" id="answerHint">خمّن من أنا من التلميحات!</p>
+            </div>
+        </div>
+
+        <!-- شاشة النتيجة -->
+        <div id="resultScreen" class="screen">
+            <div class="result-icon" id="resultIcon">✓</div>
+            <h2 class="result-title" id="resultTitle">أحسنت!</h2>
+            <p class="result-answer" id="resultAnswer"></p>
+            <div class="result-coins" id="resultCoins">
+                <span>🌟</span>
+                <span id="coinsEarned">+10</span>
+            </div>
+            <p class="result-next" id="resultNext">السؤال التالي...</p>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
