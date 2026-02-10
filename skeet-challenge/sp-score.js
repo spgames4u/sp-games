@@ -1,9 +1,8 @@
 /**
- * sp-score.js - Score Bridge for Skeet Challenge (CreateJS) with Anti-Cheat
+ * sp-score.js - Score Bridge for Skeet Challenge with Anti-Cheat
  * v4.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot
  * 
- * يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API
- * اللعبة تستدعي ctlArcadeSaveScore(iScore) من حدث save_score في index.html
+ * نفس نظام playful-kitty: يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API
  */
 
 (function() {
@@ -20,9 +19,7 @@
             const params = new URLSearchParams(location.search);
             if (params.get('gameSlug')) return params.get('gameSlug');
             const parts = location.pathname.split('/').filter(Boolean);
-            const last = parts[parts.length - 1];
-            if (last && /^[a-z0-9-]+$/i.test(last) && last !== 'index.html') return last;
-            return parts[0] === 'games' ? (parts[1] || 'skeet-challenge') : (parts[0] || 'skeet-challenge');
+            return parts[0] === 'games' ? (parts[1] || 'skeet-challenge') : (parts[parts.length - 1] || 'skeet-challenge');
         })(),
         minScore: 1,
         cooldownMs: 30000,
@@ -59,7 +56,8 @@
         honeypotKeys.forEach(key => {
             try {
                 const stored = localStorage.getItem(key);
-                if (stored !== null && stored !== originalHoneypot[key]) {
+                if (stored === null) return;
+                if (stored !== originalHoneypot[key]) {
                     try {
                         const parsed = JSON.parse(stored);
                         if (!parsed || typeof parsed.v !== 'number' || parsed.v !== 1 ||
@@ -100,6 +98,26 @@
                 if (!proofState.hasInput) proofState.hasInput = true;
             }, { passive: true, capture: true });
         });
+        if (window.parent !== window) {
+            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games', 'https://games.sp.games'];
+            window.addEventListener('message', (e) => {
+                let originAllowed = false;
+                try {
+                    const eOrigin = e.origin.toLowerCase();
+                    for (const allowed of allowedOrigins) {
+                        const allowedLower = allowed.toLowerCase();
+                        if (eOrigin === allowedLower || (allowedLower.includes('localhost') && eOrigin.startsWith('http://localhost')) || (allowedLower.includes('127.0.0.1') && eOrigin.startsWith('http://127.0.0.1'))) {
+                            originAllowed = true;
+                            break;
+                        }
+                    }
+                } catch (err) { return; }
+                if (!originAllowed) return;
+                if (e.data && typeof e.data === 'object' && (e.data.type === 'SP_INPUT' || e.data.type === 'user_interaction' || e.data.hasInput === true)) {
+                    if (!proofState.hasInput) proofState.hasInput = true;
+                }
+            });
+        }
         if (!document.hidden) proofState.visibleStart = Date.now();
         if (document.hasFocus && document.hasFocus()) proofState.focusStart = Date.now();
     }
@@ -212,6 +230,7 @@
                     currentNonce = null;
                 }
             } else {
+                log('❌ HTTP Error:', response.status);
                 const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
                 fd.count++; fd.lastAttempt = Date.now();
                 failedAttempts.set(score, fd);
@@ -246,25 +265,26 @@
         setTimeout(() => div.remove(), 3500);
     }
     
-    function extractScore(scoreOrObj) {
-        if (typeof scoreOrObj === 'number') return Math.floor(Math.abs(scoreOrObj));
-        if (scoreOrObj && typeof scoreOrObj === 'object' && typeof scoreOrObj.score === 'number') {
-            return Math.floor(Math.abs(scoreOrObj.score));
-        }
-        return 0;
-    }
+    const originalCtlArcadeSaveScore = window.ctlArcadeSaveScore;
     
-    function newCtlArcadeSaveScore(scoreOrObj) {
-        const score = extractScore(scoreOrObj);
-        log('🎯 ctlArcadeSaveScore called with score:', score);
-        
-        if (score >= CONFIG.minScore) {
+    function newCtlArcadeSaveScore(iScore) {
+        log('🎯 ctlArcadeSaveScore called with score:', iScore);
+        const sanitizedScore = Math.floor(Math.abs(iScore)) || 0;
+        if (sanitizedScore >= CONFIG.minScore) {
             if (!proofState.hasInput) {
                 log('⏳ Waiting for user input before sending score...');
                 return;
             }
-            sendScore(score);
+            sendScore(sanitizedScore);
         }
+        if (typeof originalCtlArcadeSaveScore === 'function') {
+            originalCtlArcadeSaveScore(iScore);
+        }
+        try {
+            if (window.parent !== window && typeof window.parent.__ctlArcadeSaveScore === 'function') {
+                window.parent.__ctlArcadeSaveScore({ score: iScore });
+            }
+        } catch (e) {}
     }
     
     window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
@@ -277,7 +297,7 @@
     } catch (e) {}
     
     async function init() {
-        log('Initializing Skeet Challenge Score Bridge...');
+        log('Initializing...');
         log('Game:', CONFIG.gameSlug);
         initHoneypot();
         startTracking();
@@ -286,7 +306,7 @@
             if (document.readyState === 'complete') r();
             else window.addEventListener('load', r);
         });
-        log('✅ Ready! Listening for ctlArcadeSaveScore (TOTAL SCORE)');
+        log('✅ Ready! Listening for ctlArcadeSaveScore');
     }
     
     init();
