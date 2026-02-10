@@ -1,8 +1,8 @@
 /**
- * sp-score.js - Score Bridge for Skeet Challenge (CreateJS/EaselJS) with Anti-Cheat
+ * sp-score.js - Score Bridge for Skeet Challenge (CreateJS) with Anti-Cheat
  * v4.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot
  * 
- * يعمل مثل playful-kitty: يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API
+ * يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API
  * اللعبة تستدعي ctlArcadeSaveScore(iScore) من حدث save_score في index.html
  */
 
@@ -38,14 +38,8 @@
     let lastFailedTime = 0;
     
     let proofState = {
-        visibleStart: null,
-        visibleMs: 0,
-        focusStart: null,
-        focusMs: 0,
-        hasInput: false,
-        history: [],
-        historyLength: 0,
-        historySpanMs: 0
+        visibleStart: null, visibleMs: 0, focusStart: null, focusMs: 0,
+        hasInput: false, history: [], historyLength: 0, historySpanMs: 0
     };
     
     const honeypotKeys = ['score_cache_v2', 'profile_state_v1', 'ui_sync_hint'];
@@ -211,8 +205,7 @@
                 } else {
                     log('⚠️ Save failed:', result.error);
                     const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-                    fd.count++;
-                    fd.lastAttempt = Date.now();
+                    fd.count++; fd.lastAttempt = Date.now();
                     failedAttempts.set(score, fd);
                     lastFailedScore = score;
                     lastFailedTime = Date.now();
@@ -220,8 +213,7 @@
                 }
             } else {
                 const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-                fd.count++;
-                fd.lastAttempt = Date.now();
+                fd.count++; fd.lastAttempt = Date.now();
                 failedAttempts.set(score, fd);
                 lastFailedScore = score;
                 lastFailedTime = Date.now();
@@ -230,8 +222,7 @@
         } catch (e) {
             log('❌ Error:', e.message);
             const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-            fd.count++;
-            fd.lastAttempt = Date.now();
+            fd.count++; fd.lastAttempt = Date.now();
             failedAttempts.set(score, fd);
             lastFailedScore = score;
             lastFailedTime = Date.now();
@@ -274,9 +265,6 @@
             }
             sendScore(score);
         }
-        
-        // لا نستدعي parent.__ctlArcadeSaveScore - يسبب SecurityError عند Cross-Origin
-        // التواصل مع الصفحة الأم يتم عبر postMessage في sendScore بعد الحفظ بنجاح
     }
     
     window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
