@@ -308,6 +308,7 @@
 
         await getNonce();
         window.ctlArcadeSaveScore = ctlArcadeSaveScore;
+        window.spScorePrefetchNonce = function() { getNonce(); };
         log('✅ Ready! Use ctlArcadeSaveScore(score) on save_score event.');
     }
 

@@ -122,6 +122,7 @@ function CEndPanel(oSpriteBg){
             _oVerifyScore = null;
         }
         if (iWinner === WHITE && s_iGameType === MODE_COMPUTER && typeof window.ctlArcadeSaveScore === "function") {
+            if (typeof window.spScorePrefetchNonce === "function") window.spScorePrefetchNonce();
             var oSpriteBtn = s_oSpriteLibrary.getSprite('but_yes');
             _oVerifyScore = new CTextButton(CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 180, oSpriteBtn, "تحقق من النتيجة", PRIMARY_FONT, "#402604", 36, _oGroup);
             _oVerifyScore.addEventListener(ON_MOUSE_UP, function() {
