@@ -275,9 +275,8 @@
             sendScore(score);
         }
         
-        if (window.parent !== window && typeof window.parent.__ctlArcadeSaveScore === 'function') {
-            window.parent.__ctlArcadeSaveScore(typeof scoreOrObj === 'object' ? scoreOrObj : { score: score });
-        }
+        // لا نستدعي parent.__ctlArcadeSaveScore - يسبب SecurityError عند Cross-Origin
+        // التواصل مع الصفحة الأم يتم عبر postMessage في sendScore بعد الحفظ بنجاح
     }
     
     window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
