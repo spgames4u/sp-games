@@ -498,6 +498,11 @@ function CGame(oData){
             _iWhiteScore = 0;
         }
         
+        if (iWinner === WHITE && s_iGameType === MODE_COMPUTER && typeof window.ctlArcadeSaveScore === "function") {
+            if (typeof window.spScorePrefetchNonce === "function") window.spScorePrefetchNonce();
+            window.ctlArcadeSaveScore(Math.floor(_iWhiteScore));
+        }
+        
         _oEndPanel = new CEndPanel(s_oSpriteLibrary.getSprite('msg_box'));
         
         setTimeout(function(){

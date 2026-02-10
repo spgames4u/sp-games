@@ -115,11 +115,6 @@ function CEndPanel(oSpriteBg){
        
         _oGroup.visible = true;
         
-        if (iWinner === WHITE && s_iGameType === MODE_COMPUTER && typeof window.ctlArcadeSaveScore === "function") {
-            if (typeof window.spScorePrefetchNonce === "function") window.spScorePrefetchNonce();
-            window.ctlArcadeSaveScore(iWhiteScore);
-        }
-        
         var oParent = this;
         createjs.Tween.get(_oGroup).to({alpha:1 }, 500);
                
