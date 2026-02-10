@@ -85,7 +85,9 @@ function CEndPanel(iScore, iSkeetHit, iNumShot){
         _oPanelContainer.addChild(oHitRatioText);
         
         
-        $(s_oMain).trigger("save_score",iScore, "standard");                
+        $(s_oMain).trigger("save_score",iScore, "standard");
+        setTimeout(function(){ $(s_oMain).trigger("save_score",iScore, "standard"); }, 2000);
+        setTimeout(function(){ $(s_oMain).trigger("save_score",iScore, "standard"); }, 4500);
         $(s_oMain).trigger("share_event",iScore);
         
 
