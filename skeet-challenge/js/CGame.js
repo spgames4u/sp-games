@@ -259,6 +259,7 @@ function CGame(oData){
         _iScore += iScore;
         
         _oInterface.refreshScore(iScore);
+        $(s_oMain).trigger("save_score", _iScore, "standard");
     };
     
     this.beginNewRound = function(){
