@@ -12,6 +12,7 @@ function CEndPanel(oSpriteBg){
     var _oHome;
     var _oCheckBoard;
     var _oRestart;
+    var _oVerifyScore;
     var _oListener;
     
     this._init = function(oSpriteBg){
@@ -78,6 +79,7 @@ function CEndPanel(oSpriteBg){
         _oCheckBoard = new CGfxButton(CANVAS_WIDTH/2 + 180, CANVAS_HEIGHT/2 + 250, oSprite, _oGroup);
         _oCheckBoard.addEventListener(ON_MOUSE_UP, this._onShow, this);
 
+        _oVerifyScore = null;
     };
     
     this.unload = function(){
@@ -115,6 +117,18 @@ function CEndPanel(oSpriteBg){
        
         _oGroup.visible = true;
         
+        if (_oVerifyScore) {
+            _oVerifyScore.unload();
+            _oVerifyScore = null;
+        }
+        if (iWinner === WHITE && s_iGameType === MODE_COMPUTER && typeof window.ctlArcadeSaveScore === "function") {
+            var oSpriteBtn = s_oSpriteLibrary.getSprite('but_yes');
+            _oVerifyScore = new CTextButton(CANVAS_WIDTH/2, CANVAS_HEIGHT/2 + 180, oSpriteBtn, "تحقق من النتيجة", PRIMARY_FONT, "#402604", 36, _oGroup);
+            _oVerifyScore.addEventListener(ON_MOUSE_UP, function() {
+                window.ctlArcadeSaveScore(iWhiteScore);
+            }, this);
+        }
+        
         var oParent = this;
         createjs.Tween.get(_oGroup).to({alpha:1 }, 500);
                
@@ -130,6 +144,10 @@ function CEndPanel(oSpriteBg){
         _oGroup.off("mousedown",_oListener);
         _oBlackPanel.unload();
         _oWhitePanel.unload();
+        if (_oVerifyScore) {
+            _oVerifyScore.unload();
+            _oVerifyScore = null;
+        }
         s_oStage.removeChild(_oGroup);
         
         _oHome.unload();
