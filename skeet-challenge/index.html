@@ -13,7 +13,6 @@
 	<meta name="msapplication-tap-highlight" content="no"/>
 
         <script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
-        <!-- sp-score.js - جسر لحفظ النتيجة في ScorePoint (يُحمّل قبل اللعبة) -->
         <script type="text/javascript" src="sp-score.js" data-cfasync="false"></script>
         <script type="text/javascript" src="js/easeljs-NEXT.min.js"></script>
 	<script type="text/javascript" src="js/tweenjs.js"></script>
@@ -83,7 +82,6 @@
                     });
 
                     $(oMain).on("save_score", function(evt,iScore, szMode) {
-                           // إرسال التوتال سكور لـ ScorePoint (sp-score.js يعترض ويرسل للـ API + postMessage)
                            if (typeof window.ctlArcadeSaveScore === 'function') {
                                window.ctlArcadeSaveScore(iScore);
                            }
@@ -92,7 +90,7 @@
                                    if (typeof parent.__ctlArcadeSaveScore === 'function') {
                                        parent.__ctlArcadeSaveScore({score:iScore, mode: szMode});
                                    }
-                               } catch (e) { /* Cross-Origin: لا يمكن الوصول لـ parent */ }
+                               } catch (e) {}
                            }
                     });
 

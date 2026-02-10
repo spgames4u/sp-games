@@ -1,8 +1,7 @@
 /**
  * sp-score.js - Score Bridge for Skeet Challenge with Anti-Cheat
- * v4.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot
- * 
- * نفس نظام playful-kitty: يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API
+ * v4.0 - نفس نظام playful-kitty
+ * يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API
  */
 
 (function() {
@@ -19,7 +18,7 @@
             const params = new URLSearchParams(location.search);
             if (params.get('gameSlug')) return params.get('gameSlug');
             const parts = location.pathname.split('/').filter(Boolean);
-            return parts[0] === 'games' ? (parts[1] || 'skeet-challenge') : (parts[parts.length - 1] || 'skeet-challenge');
+            return parts.length > 0 ? parts[parts.length - 1] : 'skeet-challenge';
         })(),
         minScore: 1,
         cooldownMs: 30000,
@@ -265,9 +264,7 @@
         setTimeout(() => div.remove(), 3500);
     }
     
-    const originalCtlArcadeSaveScore = window.ctlArcadeSaveScore;
-    
-    function newCtlArcadeSaveScore(iScore) {
+    window.ctlArcadeSaveScore = function(iScore) {
         log('🎯 ctlArcadeSaveScore called with score:', iScore);
         const sanitizedScore = Math.floor(Math.abs(iScore)) || 0;
         if (sanitizedScore >= CONFIG.minScore) {
@@ -277,24 +274,12 @@
             }
             sendScore(sanitizedScore);
         }
-        if (typeof originalCtlArcadeSaveScore === 'function') {
-            originalCtlArcadeSaveScore(iScore);
-        }
         try {
             if (window.parent !== window && typeof window.parent.__ctlArcadeSaveScore === 'function') {
                 window.parent.__ctlArcadeSaveScore({ score: iScore });
             }
         } catch (e) {}
-    }
-    
-    window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
-    try {
-        Object.defineProperty(window, 'ctlArcadeSaveScore', {
-            value: newCtlArcadeSaveScore,
-            writable: false,
-            configurable: false
-        });
-    } catch (e) {}
+    };
     
     async function init() {
         log('Initializing...');
