@@ -7,6 +7,7 @@ function CEndPanel(oSpriteBg){
 
     var _oMsgText;
     var _oMsgTextUnder;
+    var _oScoreDisplay;
     var _oFade;
 
     var _oHome;
@@ -59,6 +60,13 @@ function CEndPanel(oSpriteBg){
                     true, true, false,
                     false );
 
+        _oScoreDisplay = new createjs.Text("", "bold 42px " + PRIMARY_FONT, "#ffd700");
+        _oScoreDisplay.textAlign = "center";
+        _oScoreDisplay.x = CANVAS_WIDTH/2;
+        _oScoreDisplay.y = CANVAS_HEIGHT/2 - 160;
+        _oScoreDisplay.lineWidth = 400;
+        _oGroup.addChild(_oScoreDisplay);
+
         _oBlackPanel = new CInfoTurn(CANVAS_WIDTH/2,1000,BLACK, _oGroup);
         _oBlackPanel.setBgVisible(false);
         _oBlackPanel.invert();
@@ -93,6 +101,19 @@ function CEndPanel(oSpriteBg){
         _oBlackPanel.refreshTime(formatTime(iBlackTime));
         _oWhitePanel.refreshTime(formatTime(iWhiteTime));
         
+        var iScoreNum = Math.floor(iWhiteScore);
+        if (s_iGameType === MODE_COMPUTER && iWinner === WHITE) {
+            _oScoreDisplay.text = (PRIMARY_FONT === "arialrounded" ? "نتيجتك: " : "Your score: ") + iScoreNum.toLocaleString();
+            _oScoreDisplay.visible = true;
+        } else if (s_iGameType === MODE_COMPUTER && iWinner === BLACK) {
+            _oScoreDisplay.text = (PRIMARY_FONT === "arialrounded" ? "انتهت المباراة" : "Game over");
+            _oScoreDisplay.visible = true;
+        } else if (iWinner === DRAW) {
+            _oScoreDisplay.text = (PRIMARY_FONT === "arialrounded" ? "تعادل" : "Draw");
+            _oScoreDisplay.visible = true;
+        } else {
+            _oScoreDisplay.visible = false;
+        }
         
         if(iWinner === WHITE){
             playSound("win",1,false); 
