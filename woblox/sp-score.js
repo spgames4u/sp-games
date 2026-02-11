@@ -23,7 +23,7 @@
         gameSlug: getGameSlug(),
         minScore: 1,
         cooldownMs: 2000,
-        debug: new URLSearchParams(location.search).get('scorepointDebug') === '1'
+        debug: (location.hostname === 'localhost' || location.hostname === '127.0.0.1') || new URLSearchParams(location.search).get('scorepointDebug') === '1'
     };
 
     let lastSentScore = 0;
@@ -106,14 +106,17 @@
     const log = CONFIG.debug ? (...a) => console.log('%c[SP-Score-Woblox]', 'color:#00c853;font-weight:bold', ...a) : () => {};
 
     async function sendScore(score) {
+        if (isSending) return false;
+        isSending = true;
         const now = Date.now();
-        if (isSending || score < CONFIG.minScore) return false;
-        if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) return false;
+        if (score < CONFIG.minScore) { isSending = false; return false; }
+        if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) { isSending = false; return false; }
         if (!currentNonce) {
             const ok = await getNonce();
-            if (!ok) { log('❌ No nonce'); return false; }
+            if (!ok) { log('❌ No nonce'); isSending = false; return false; }
         }
-        isSending = true;
+        var nonceToUse = currentNonce;
+        currentNonce = null;
         log('📤 Saving score (stage):', score);
 
         if (proofState.visibleStart && !document.hidden) {
@@ -142,7 +145,7 @@
                 body: JSON.stringify({
                     gameSlug: CONFIG.gameSlug,
                     score: score,
-                    nonce: currentNonce,
+                    nonce: nonceToUse,
                     proof: proof,
                     honeypotTouched: checkHoneypot()
                 })
@@ -152,18 +155,27 @@
                 if (result.ok !== false) {
                     lastSentScore = score;
                     lastSentTime = Date.now();
-                    currentNonce = null;
+                    setTimeout(function() { getNonce(); }, 100);
                     log('✅ Score saved:', score, result);
                     if (window.parent !== window) {
                         window.parent.postMessage({ type: 'SP_SCORE_SAVED', score: score, result: result, gameSlug: CONFIG.gameSlug }, '*');
                     }
+                    var t = document.documentElement.lang === 'en' ? 'Your Score' : 'نتيجتك';
+                    var msg = t + ' ' + score.toLocaleString();
+                    var toast = document.createElement('div');
+                    toast.className = 'sp-score-toast';
+                    toast.textContent = msg;
+                    toast.style.cssText = 'position:fixed;left:50%;top:20px;transform:translateX(-50%);background:linear-gradient(135deg,#4CAF50,#45a049);color:#fff;padding:12px 24px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,.3);z-index:99999;font:bold 16px Arial;direction:rtl;animation:fadeIn 0.3s ease';
+                    if (!document.getElementById('sp-toast-style')) {
+                        var s = document.createElement('style'); s.id = 'sp-toast-style'; s.textContent = '@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}'; document.head.appendChild(s);
+                    }
+                    document.body.appendChild(toast);
+                    setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 300); }, 3500);
                     return true;
                 }
             }
-            currentNonce = null;
         } catch (e) {
             log('❌ Error:', e.message);
-            currentNonce = null;
         } finally {
             isSending = false;
         }
