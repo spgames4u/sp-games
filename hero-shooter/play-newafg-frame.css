@@ -1,0 +1,52 @@
+
+    body,html{
+		padding:0;margin:0;height:100%;width:100%;
+	}
+
+	#div_iframe_game{
+      width: 100%;
+	}
+	
+	 #iframe_game{
+        width:100%;
+        height:100%;	
+    }  
+			
+			
+	#game_banner{
+    position: absolute;
+		width:100%;
+		justify-content:center;
+		display:flex;
+	}
+	
+#img_recommend {
+
+    opacity: 0.1;                                   /* 不透明度 */
+    overflow: hidden;                               /* 溢出隐藏 */
+   /* margin: 25% auto; */                              /* 外边距 */
+  
+    /* IE10、Firefox and Opera，IE9以及更早的版本不支持 */
+    animation-name: breath;                         /* 动画名称 */
+    animation-duration: 1200ms;                         /* 动画时长3秒 */
+    animation-timing-function: ease-in-out;         /* 动画速度曲线：以低速开始和结束 */
+    animation-iteration-count: infinite;            /* 播放次数：无限 */
+ 
+    /* Safari and Chrome */
+    -webkit-animation-name: breath;                 /* 动画名称 */
+    -webkit-animation-duration: 1200ms;                 /* 动画时长3秒 */
+    -webkit-animation-timing-function: ease-in-out; /* 动画速度曲线：以低速开始和结束 */
+    -webkit-animation-iteration-count: infinite;    /* 播放次数：无限 */
+}
+ 
+@keyframes breath {
+    from { opacity: 0.1; }                          /* 动画开始时的不透明度 */
+    50%  { opacity:   1; }                          /* 动画50% 时的不透明度 */
+    to   { opacity: 0.1; }                          /* 动画结束时的不透明度 */    
+}
+ 
+@-webkit-keyframes breath {
+    from { opacity: 0.1; }                          /* 动画开始时的不透明度 */
+    50%  { opacity:   1; }                          /* 动画50% 时的不透明度 */
+    to   { opacity: 0.1; }                          /* 动画结束时的不透明度 */
+}

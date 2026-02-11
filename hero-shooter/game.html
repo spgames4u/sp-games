@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Hero Shooter 3D</title>
+  <meta name="viewport"
+    content="width=device-width,user-scalable=no,initial-scale=1, minimum-scale=1,maximum-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="renderer" content="webkit" />
+  <meta name="force-rendering" content="webkit" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="msapplication-tap-highlight" content="no">
+  <meta name="full-screen" content="yes" />
+  <meta name="x5-fullscreen" content="true" />
+  <meta name="360-fullscreen" content="true" />
+  <meta name="screen-orientation" content="" />
+  <meta name="x5-orientation" content="">
+  <meta name="x5-page-mode" content="app">
+  <link rel="stylesheet" type="text/css" href="style-mobile.6e9cd.css" />
+  <style>
+    .basePlate {
+      width: 60%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: #6172cc;
+      z-index: 999;
+      text-align: center;
+    }
+
+    .baseText {
+      width: 100%;
+      height: 100px;
+      line-height: 50px;
+      text-align: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
+      font-weight: bold;
+      font-size: 20px;
+      color: #ffffff;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <div class="basePlate" id="basePlate">
+    <span class="baseText">Entering the game, </br>please wait. . .</span>
+  </div>
+  <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0" style="height: 1920px; width: 1080px;"></canvas>
+  <div id="splash">
+    <div class="progress-bar stripes">
+      <span style="width: 0%"></span>
+    </div>
+  </div>
+  <img id="adTips"
+    style="width: 70%;z-index:999;position: absolute;left: 0;right: 0;top:0;bottom:0;margin: auto;display: none;"
+    src="adTips.png" alt="No ads yet">
+  <script type="text/javascript" src="adSet.js"></script>
+  <script src="src/settings.js" charset="utf-8"></script>
+  <script src="main.js" charset="utf-8"></script>
+  <script type="text/javascript">
+    function closeBase() {
+      document.getElementById("basePlate").style.display = "none";
+    }
+
+    function playVideoAd(call) {
+      call(true)
+
+      /***   example  Here are places where other Reward ad SDK calls can be written,  you can add other reward ads(no adsense ad) sdk to here
+       cc && cc.audioEngine.pauseAll();
+       h5_sdk.showAd('Reward',()=>{cc && cc.audioEngine.resumeAll();call(true)},//  Callback for successful ad viewing
+        ()=>{cc && cc.audioEngine.resumeAll();call(false)});//Callback for failed ad viewing
+        ***/
+    }
+    function playInter() {
+      /***  example  Here are places where other interstitial ad SDK calls can be written， you can add other interstitial ads(no adsense ad) sdk to here
+      cc && cc.audioEngine.pauseAll();
+      h5_sdk.showAd('Interstitial',
+      ()=>{ cc && cc.audioEngine.resumeAll();});// Callback for closing interstitial ad
+      adSetInter();***/
+    }
+    var gameEndFirst = true;
+
+    function gameEndLoad() {
+      if (!gameEndFirst) return;
+      gameEndFirst = false;
+      window.parent.postMessage({
+        "type": 3
+      }, '*');
+    }
+
+    (function () {
+      if (typeof VConsole !== 'undefined') {
+        window.vConsole = new VConsole();
+      }
+
+      var debug = false; //window._CCSettings.debug;
+      var splash = document.getElementById('splash');
+      splash.style.display = 'none';
+
+      function loadScript(moduleName, cb) {
+        function scriptLoaded() {
+          document.body.removeChild(domScript);
+          domScript.removeEventListener('load', scriptLoaded, false);
+          cb && cb();
+        };
+        var domScript = document.createElement('script');
+        domScript.async = true;
+        domScript.src = moduleName;
+        domScript.addEventListener('load', scriptLoaded, false);
+        document.body.appendChild(domScript);
+      }
+
+      loadScript(debug ? 'cocos/cocos2d-js.js' : 'cocos/cocos2d-js-min.js', function () {
+        if (CC_PHYSICS_BUILTIN || CC_PHYSICS_CANNON) {
+          window.boot();
+        } else {
+          window.boot();
+        }
+      });
+    })();
+  </script>
+  <!-- ScorePoint: حفظ النتائج مع منع الغش -->
+  <script src="sp-score.js"></script>
+</body>
+
+</html>
