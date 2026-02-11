@@ -1,7 +1,6 @@
 /**
  * sp-score.js - جسر حفظ النتيجة لـ woblox (Construct 2)
- * يستمع لـ SP_SAVE_SCORE_REQUEST ويرسل للـ API
- * نفس منطق playful-kitty
+ * يستقبل SP_SAVE_SCORE_REQUEST (من c2runtime أو من data.js) ويرسل للـ API ثم يخبر الـ parent
  */
 
 (function() {
@@ -63,7 +62,8 @@
                 if (stored !== originalHoneypot[key]) {
                     try {
                         const parsed = JSON.parse(stored);
-                        if (!parsed || typeof parsed.v !== 'number' || parsed.v !== 1 || typeof parsed.t !== 'number' || typeof parsed.n !== 'string') touched = true;
+                        if (!parsed || typeof parsed.v !== 'number' || parsed.v !== 1 ||
+                            typeof parsed.t !== 'number' || typeof parsed.n !== 'string') touched = true;
                     } catch (e) { touched = true; }
                 }
             } catch (e) {}
@@ -106,20 +106,14 @@
     const log = CONFIG.debug ? (...a) => console.log('%c[SP-Score-Woblox]', 'color:#00c853;font-weight:bold', ...a) : () => {};
 
     async function sendScore(score) {
-        if (isSending) return false;
-        isSending = true;
-
         const now = Date.now();
-        if (score < CONFIG.minScore) { isSending = false; return false; }
-        if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) { isSending = false; return false; }
-
+        if (isSending || score < CONFIG.minScore) return false;
+        if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) return false;
         if (!currentNonce) {
             const ok = await getNonce();
-            if (!ok) { log('❌ No nonce'); isSending = false; return false; }
+            if (!ok) { log('❌ No nonce'); return false; }
         }
-        var nonceToUse = currentNonce;
-        currentNonce = null;
-
+        isSending = true;
         log('📤 Saving score (stage):', score);
 
         if (proofState.visibleStart && !document.hidden) {
@@ -148,7 +142,7 @@
                 body: JSON.stringify({
                     gameSlug: CONFIG.gameSlug,
                     score: score,
-                    nonce: nonceToUse,
+                    nonce: currentNonce,
                     proof: proof,
                     honeypotTouched: checkHoneypot()
                 })
@@ -158,6 +152,7 @@
                 if (result.ok !== false) {
                     lastSentScore = score;
                     lastSentTime = Date.now();
+                    currentNonce = null;
                     log('✅ Score saved:', score, result);
                     if (window.parent !== window) {
                         window.parent.postMessage({ type: 'SP_SCORE_SAVED', score: score, result: result, gameSlug: CONFIG.gameSlug }, '*');
@@ -165,8 +160,10 @@
                     return true;
                 }
             }
+            currentNonce = null;
         } catch (e) {
             log('❌ Error:', e.message);
+            currentNonce = null;
         } finally {
             isSending = false;
         }
@@ -177,11 +174,12 @@
         if (!e.data || typeof e.data !== 'object' || e.data.type !== 'SP_SAVE_SCORE_REQUEST') return;
         const score = typeof e.data.score === 'number' ? e.data.score : parseInt(e.data.score, 10);
         if (!isFinite(score) || score < 1) return;
+        const gameSlug = e.data.gameSlug || CONFIG.gameSlug;
         sendScore(score);
     });
 
     initHoneypot();
     startTracking();
     getNonce();
-    log('✅ SP-Score ready for woblox');
+    log('✅ SP-Score ready for woblox (stage save)');
 })();
