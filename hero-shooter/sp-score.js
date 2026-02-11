@@ -134,12 +134,12 @@
         if (typeof tjSDK !== 'undefined' && tjSDK.onEvent && !tjSDK.onEvent._spWrapped) {
             const orig = tjSDK.onEvent;
             tjSDK.onEvent = function(ev, args) {
-                if (ev === 'role_up' && args) {
+                if ((ev === 'role_up' || ev === 'enter_game') && args) {
                     const lv = parseInt(args.rolelv || args.roleLv || args, 10);
                     if (!isNaN(lv) && lv > 0) {
                         lastRoleLv = Math.max(lastRoleLv, lv);
                         const score = lv * 1000;
-                        console.log('%c[SP-Score] role_up captured, rolelv: ' + lv + ' → score: ' + score, 'color:#00c853;font-weight:bold');
+                        console.log('%c[SP-Score] ' + ev + ' captured, rolelv: ' + lv + ' → score: ' + score, 'color:#00c853;font-weight:bold');
                         updateScoreHistory(score);
                         sendScore(score);
                     }
