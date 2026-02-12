@@ -1,15 +1,14 @@
 /**
- * sp-score.js - Score Bridge for sp.games with Anti-Cheat
- * v4.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot
+ * sp-score.js - Score Bridge for sp.games
+ * v6.0 - Game Integration Module
  */
 
 (function() {
     'use strict';
     
-    // Guard: منع تشغيل أكثر من نسخة لنفس اللعبة
     const guardKey = '__SP_SCORE_RUNNING_' + (() => {
         const parts = location.pathname.split('/').filter(Boolean);
-        return parts[0] === 'games' ? (parts[1] || 'unknown') : (parts[0] || 'unknown');
+        return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'unknown';
     })();
     if (window[guardKey]) {
         console.warn('[SP-Score] Already running, skipping duplicate instance');
@@ -26,11 +25,11 @@
             : 'https://new.sp.games/api/games/nonce',
         gameSlug: (() => {
             const parts = location.pathname.split('/').filter(Boolean);
-            return parts[0] === 'games' ? (parts[1] || 'unknown') : (parts[0] || 'unknown');
+            return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'unknown';
         })(),
-        pollInterval: 3000, // 3 ثواني بدل 2
+        pollInterval: 3000,
         minScore: 1,
-        cooldownMs: 30000, // 30 ثانية
+        cooldownMs: 30000,
         debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
     };
     
@@ -39,25 +38,39 @@
     let lastSentTime = 0;
     let isSending = false;
     let currentNonce = null;
-    let failedAttempts = new Map(); // Map<score, {count, lastAttempt}>
+    let failedAttempts = new Map();
     let lastFailedScore = null;
     let lastFailedTime = 0;
-    let pollIntervalId = null; // لحفظ interval ID
-    let currentGameSlug = CONFIG.gameSlug; // لتتبع تغيير gameSlug
+    let pollIntervalId = null;
+    let currentGameSlug = CONFIG.gameSlug;
     
-    // ==================== Proof Tracking ====================
     let proofState = {
         visibleStart: null,
         visibleMs: 0,
         focusStart: null,
         focusMs: 0,
         hasInput: false,
-        history: [], // [{score, timestamp}]
+        history: [],
         historyLength: 0,
         historySpanMs: 0
     };
     
-    // ==================== Honeypot ====================
+    const SNAP_CONFIG = {
+        maxSnapshots: 10,
+        minInterval: 1000,
+    };
+    let snapshots = [];
+    let lastSnapTime = 0;
+    
+    function recordSnapshot(score) {
+        const now = Date.now();
+        if (now - lastSnapTime < SNAP_CONFIG.minInterval) return;
+        if (snapshots.length > 0 && snapshots[snapshots.length - 1].s === score) return;
+        snapshots.push({ t: now, s: score });
+        lastSnapTime = now;
+        if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+    }
+    
     const honeypotKeys = ['score_cache_v2', 'profile_state_v1', 'ui_sync_hint'];
     const originalHoneypot = {};
     
@@ -72,9 +85,7 @@
             originalHoneypot[key] = JSON.stringify(value);
             try {
                 localStorage.setItem(key, originalHoneypot[key]);
-            } catch (e) {
-                // localStorage full or disabled
-            }
+            } catch (e) {}
         });
     }
     
@@ -83,12 +94,8 @@
         honeypotKeys.forEach(key => {
             try {
                 const stored = localStorage.getItem(key);
-                if (stored === null) {
-                    // محذوف - لا تعتبر tamper
-                    return;
-                }
+                if (stored === null) return;
                 if (stored !== originalHoneypot[key]) {
-                    // محاولة parse للتحقق من الشكل
                     try {
                         const parsed = JSON.parse(stored);
                         if (!parsed || typeof parsed.v !== 'number' || parsed.v !== 1 ||
@@ -100,9 +107,7 @@
                         touched = true;
                     }
                 }
-            } catch (e) {
-                // ignore
-            }
+            } catch (e) {}
         });
         return touched;
     }
@@ -113,16 +118,14 @@
             visibleMs: 0,
             focusStart: null,
             focusMs: 0,
-            hasInput: false,
+            hasInput: proofState.hasInput,
             history: [],
             historyLength: 0,
             historySpanMs: 0
         };
     }
     
-    // ==================== Proof Event Listeners ====================
     function startTracking() {
-        // Visibility tracking
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 if (proofState.visibleStart) {
@@ -134,7 +137,6 @@
             }
         });
         
-        // Focus tracking
         window.addEventListener('focus', () => {
             proofState.focusStart = Date.now();
         });
@@ -145,11 +147,9 @@
             }
         });
         
-        // Input tracking - يعمل في iframe و parent
         const inputEvents = ['pointerdown', 'keydown', 'touchstart', 'mousedown'];
-        let inputDetectedLogged = false; // لتجنب spam في logs
+        let inputDetectedLogged = false;
         
-        // على document (يعمل في iframe)
         inputEvents.forEach(event => {
             document.addEventListener(event, () => {
                 if (!proofState.hasInput) {
@@ -162,9 +162,7 @@
             }, { once: false, passive: true, capture: true });
         });
         
-        // على window أيضاً (للحالات الخاصة) - لكن فقط داخل iframe
         if (window.self !== window.top) {
-            // نحن في iframe - استمع على window أيضاً
             inputEvents.forEach(event => {
                 window.addEventListener(event, () => {
                     if (!proofState.hasInput) {
@@ -178,7 +176,6 @@
             });
         }
         
-        // إذا كان في iframe، استمع أيضاً من parent (مقيد بالأمان)
         if (window.parent !== window) {
             const allowedOrigins = [
                 'http://localhost:4000',
@@ -188,13 +185,11 @@
             ];
             
             window.addEventListener('message', (e) => {
-                // التحقق من origin (مقارنة دقيقة لتجنب bypass)
                 let originAllowed = false;
                 try {
                     const eOrigin = e.origin.toLowerCase();
                     for (const allowed of allowedOrigins) {
                         const allowedLower = allowed.toLowerCase();
-                        // مطابقة دقيقة أو localhost مع أي port
                         if (eOrigin === allowedLower || 
                             (allowedLower.includes('localhost') && eOrigin.startsWith('http://localhost')) ||
                             (allowedLower.includes('127.0.0.1') && eOrigin.startsWith('http://127.0.0.1'))) {
@@ -203,14 +198,11 @@
                         }
                     }
                 } catch (err) {
-                    return; // origin غير صالح
+                    return;
                 }
                 
-                if (!originAllowed) {
-                    return; // origin غير مسموح
-                }
+                if (!originAllowed) return;
                 
-                // التحقق من نوع الرسالة
                 if (e.data && typeof e.data === 'object' && 
                     (e.data.type === 'SP_INPUT' || e.data.type === 'user_interaction' || e.data.hasInput === true)) {
                     if (!proofState.hasInput) {
@@ -224,7 +216,6 @@
             });
         }
         
-        // Initialize visibility
         if (!document.hidden) {
             proofState.visibleStart = Date.now();
         }
@@ -236,8 +227,6 @@
     function updateScoreHistory(score) {
         const now = Date.now();
         proofState.history.push({ score, timestamp: now });
-        
-        // Keep only last 5000 entries
         if (proofState.history.length > 5000) {
             proofState.history.shift();
         }
@@ -248,7 +237,6 @@
         }
     }
     
-    // ==================== Nonce Management ====================
     async function getNonce() {
         try {
             const response = await fetch(`${CONFIG.nonceUrl}?gameSlug=${encodeURIComponent(CONFIG.gameSlug)}`, {
@@ -275,13 +263,11 @@
         : () => {};
     
     async function detectProjectId() {
-        // الحل الصحيح: اقرأ data.json من مجلد اللعبة الحالية أولاً
         try {
             const resp = await fetch('data.json');
             const data = await resp.json();
             if (data.project?.[31]) {
                 const pid = data.project[31];
-                // احفظ في localStorage لكل لعبة (cache)
                 try {
                     localStorage.setItem(`sp_pid_${CONFIG.gameSlug}`, pid);
                 } catch (e) {}
@@ -291,7 +277,6 @@
             log('⚠️ Failed to read data.json:', e.message);
         }
         
-        // حل احتياطي: اقرأ من localStorage cache
         try {
             const cached = localStorage.getItem(`sp_pid_${CONFIG.gameSlug}`);
             if (cached) {
@@ -300,14 +285,12 @@
             }
         } catch (e) {}
         
-        // حل احتياطي أخير: ابحث في indexedDB لكن فقط للـ DB الذي يطابق gameSlug
         if (indexedDB.databases) {
             try {
                 const dbs = await indexedDB.databases();
                 for (const db of dbs) {
                     if (db.name?.startsWith('c3-localstorage-')) {
                         const pid = db.name.replace('c3-localstorage-', '');
-                        // احفظ في localStorage
                         try {
                             localStorage.setItem(`sp_pid_${CONFIG.gameSlug}`, pid);
                         } catch (e) {}
@@ -359,44 +342,38 @@
             const detected = Math.floor(last || best) || null;
             if (detected) {
                 updateScoreHistory(detected);
+                recordSnapshot(detected);
             }
             return detected;
         } catch (e) { return null; }
     }
     
     async function sendScore(score) {
-        // Cooldown check
         const now = Date.now();
         if (isSending || score < CONFIG.minScore) return false;
         
-        // منع إرسال نفس السكور مرتين (إلا إذا مر cooldown)
         if (score <= lastSentScore) {
             if ((now - lastSentTime) < CONFIG.cooldownMs) {
-                return false; // لم يمر cooldown
-            }
-        }
-        
-        // Backoff: منع إعادة المحاولة لنفس السكور الفاشل
-        if (score === lastFailedScore) {
-            const timeSinceFailure = now - lastFailedTime;
-            if (timeSinceFailure < 10000) { // 10 ثواني minimum backoff
                 return false;
             }
         }
         
-        // Check failed attempts for this score (backoff قصير بدل skip نهائي)
+        if (score === lastFailedScore) {
+            const timeSinceFailure = now - lastFailedTime;
+            if (timeSinceFailure < 10000) {
+                return false;
+            }
+        }
+        
         const failedData = failedAttempts.get(score);
         if (failedData && failedData.count >= 3) {
             const timeSinceLastAttempt = now - failedData.lastAttempt;
-            if (timeSinceLastAttempt < 10000) { // 10 ثواني backoff
+            if (timeSinceLastAttempt < 10000) {
                 log('⚠️ Score failed 3 times, backoff:', score, 'wait', Math.ceil((10000 - timeSinceLastAttempt) / 1000), 's');
                 return false;
             }
-            // بعد 10 ثواني، اسمح بمحاولة جديدة (لكن فقط إذا تغيّر السكور أو زاد historyLength)
-            // هذا يتم التحقق منه في الشرط التالي (score > lastSentScore أو cooldown)
         }
         
-        // Need nonce
         if (!currentNonce) {
             log('⚠️ No nonce, requesting...');
             const gotNonce = await getNonce();
@@ -409,33 +386,28 @@
         isSending = true;
         log('📤 Sending score:', score);
         
-        // تحديث عدادات الوقت قبل الإرسال (للمساعدة في قياس presence)
         if (proofState.visibleStart && !document.hidden) {
             proofState.visibleMs += now - proofState.visibleStart;
-            proofState.visibleStart = now; // Reset for next calculation
+            proofState.visibleStart = now;
         }
         if (proofState.focusStart && document.hasFocus && document.hasFocus()) {
             proofState.focusMs += now - proofState.focusStart;
-            proofState.focusStart = now; // Reset for next calculation
+            proofState.focusStart = now;
         }
         
-        // Calculate proof
         const currentVisibleMs = proofState.visibleMs + (proofState.visibleStart ? (now - proofState.visibleStart) : 0);
         const currentFocusMs = proofState.focusMs + (proofState.focusStart ? (now - proofState.focusStart) : 0);
         
-        // Check honeypot
         const honeypotTouched = checkHoneypot();
         
-        // Prepare proof data
         const proofData = {
-            visibleMs: Math.min(currentVisibleMs, 43200000), // max 12h
+            visibleMs: Math.min(currentVisibleMs, 43200000),
             focusMs: Math.min(currentFocusMs, 43200000),
             hasInput: proofState.hasInput,
             historyLength: Math.min(proofState.historyLength, 5000),
             historySpanMs: Math.min(proofState.historySpanMs, 43200000)
         };
         
-        // Log proof before sending
         const proofSummary = {
             visibleMs: proofData.visibleMs,
             focusMs: proofData.focusMs,
@@ -451,6 +423,11 @@
             proofSummary
         });
         
+        if (snapshots.length === 0 || snapshots[snapshots.length - 1].s !== score) {
+            snapshots.push({ t: Date.now(), s: score });
+            if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+        }
+        
         try {
             const response = await fetch(CONFIG.apiUrl, {
                 method: 'POST',
@@ -461,7 +438,8 @@
                     score: score,
                     nonce: currentNonce,
                     proof: proofData,
-                    honeypotTouched: honeypotTouched
+                    honeypotTouched: honeypotTouched,
+                    snapshots: snapshots.map(s => ({ t: s.t, s: s.s }))
                 })
             });
             
@@ -471,13 +449,13 @@
                     log('✅ Score saved!', result);
                     lastSentScore = score;
                     lastSentTime = now;
-                    currentNonce = null; // Consumed
+                    currentNonce = null;
                     resetProof();
+                    snapshots = [];
+                    lastSnapTime = 0;
                     
-                    // Get new nonce for next time
                     setTimeout(() => getNonce(), 100);
                     
-                    // إخبار الصفحة الأم
                     if (window.parent !== window) {
                         window.parent.postMessage({
                             type: 'SP_SCORE_SAVED',
@@ -491,7 +469,6 @@
                     return true;
                 } else {
                     log('⚠️ Save failed:', result.error);
-                    // Track failed attempt
                     const failedData = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
                     failedData.count++;
                     failedData.lastAttempt = Date.now();
@@ -500,22 +477,16 @@
                     lastFailedScore = score;
                     lastFailedTime = Date.now();
                     
-                    // Consume nonce (don't reuse failed nonce)
                     currentNonce = null;
                     
-                    // Clean old failed attempts (older than 5 minutes)
                     const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
                     for (const [s, data] of failedAttempts.entries()) {
                         if (data.lastAttempt < fiveMinutesAgo) {
                             failedAttempts.delete(s);
                         }
                     }
-                    
-                    // لا تطلب nonce جديد عند الفشل - انتظر الـ poll التالي
-                    // لا تحاول مباشرة - انتظر backoff
                 }
             } else {
-                // HTTP error
                 log('❌ HTTP Error:', response.status);
                 const failedData = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
                 failedData.count++;
@@ -523,7 +494,7 @@
                 failedAttempts.set(score, failedData);
                 lastFailedScore = score;
                 lastFailedTime = Date.now();
-                currentNonce = null; // Consume nonce
+                currentNonce = null;
             }
         } catch (e) {
             log('❌ Error:', e.message);
@@ -533,7 +504,7 @@
             failedAttempts.set(score, failedData);
             lastFailedScore = score;
             lastFailedTime = Date.now();
-            currentNonce = null; // Consume nonce
+            currentNonce = null;
         } finally {
             isSending = false;
         }
@@ -554,18 +525,14 @@
     }
     
     async function poll() {
-        // لا تحاول إذا كان هناك إرسال قيد التنفيذ
         if (isSending) return;
         
-        // لا تحاول إرسال سكور قديم من IndexedDB قبل اللعب
-        // انتظر حتى يكون هناك تفاعل من المستخدم
         if (!proofState.hasInput) {
-            // Log مرة واحدة فقط لتجنب spam
             if (CONFIG.debug && !proofState._hasInputLogged) {
                 log('⏳ Waiting for user input before sending score...');
                 proofState._hasInputLogged = true;
             }
-            return; // لا توجد تفاعلات بعد، انتظر
+            return;
         }
         
         const score = await detectScore();
@@ -573,25 +540,18 @@
         
         const now = Date.now();
         
-        // فقط أرسل إذا:
-        // 1. السكور أكبر من آخر سكور مرسل
-        // 2. أو مر cooldown و السكور > 0
         if (score > lastSentScore) {
             await sendScore(score);
         } else if ((now - lastSentTime) >= CONFIG.cooldownMs && score > 0 && score !== lastSentScore) {
-            // فقط إذا كان السكور مختلف عن آخر سكور مرسل
             await sendScore(score);
         }
     }
     
     async function init() {
-        log('Initializing Anti-Cheat system...');
+        log('Initializing...');
         log('Game:', CONFIG.gameSlug);
         
-        // Initialize honeypot
         initHoneypot();
-        
-        // Start proof tracking
         startTracking();
         
         await new Promise(r => {
@@ -604,17 +564,14 @@
         projectId = await detectProjectId();
         if (!projectId) { log('❌ Not a Construct 3 game'); return; }
         
-        // Get initial nonce
         await getNonce();
         
         log('✅ Ready! Project:', projectId);
         
-        // حفظ interval ID لإيقافه لاحقاً
         pollIntervalId = setInterval(() => {
-            // تحقق من تغيير gameSlug أو location.pathname
             const newGameSlug = (() => {
                 const parts = location.pathname.split('/').filter(Boolean);
-                return parts[0] === 'games' ? (parts[1] || 'unknown') : (parts[0] || 'unknown');
+                return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'unknown';
             })();
             
             if (newGameSlug !== currentGameSlug) {
@@ -623,7 +580,6 @@
                     clearInterval(pollIntervalId);
                     pollIntervalId = null;
                 }
-                // تنظيف guard
                 delete window[guardKey];
                 return;
             }
@@ -631,7 +587,6 @@
             poll();
         }, CONFIG.pollInterval);
         
-        // إيقاف interval عند unload
         const cleanup = () => {
             if (pollIntervalId) {
                 clearInterval(pollIntervalId);
@@ -640,14 +595,16 @@
             delete window[guardKey];
         };
         
-        // دمج cleanup مع sendBeacon في beforeunload
         window.addEventListener('beforeunload', async () => {
             cleanup();
-            // محاولة إرسال آخر سكور
             const score = await detectScore();
             if (score) {
                 const now = Date.now();
                 if (score > lastSentScore || ((now - lastSentTime) >= CONFIG.cooldownMs && score > 0)) {
+                    if (snapshots.length === 0 || snapshots[snapshots.length - 1].s !== score) {
+                        snapshots.push({ t: Date.now(), s: score });
+                        if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+                    }
                     navigator.sendBeacon?.(CONFIG.apiUrl, JSON.stringify({
                         gameSlug: CONFIG.gameSlug,
                         score: score,
@@ -659,7 +616,8 @@
                             historyLength: proofState.historyLength,
                             historySpanMs: proofState.historySpanMs
                         },
-                        honeypotTouched: checkHoneypot()
+                        honeypotTouched: checkHoneypot(),
+                        snapshots: snapshots.map(s => ({ t: s.t, s: s.s }))
                     }));
                 }
             }
@@ -673,6 +631,10 @@
         
         setTimeout(poll, 1000);
     }
+    
+    window.ctlArcadeSaveScore = function(s) {
+        console.log('%c🎯 Balls score saved: ' + s, 'color: #2196f3; font-weight: bold');
+    };
     
     init();
 })();
