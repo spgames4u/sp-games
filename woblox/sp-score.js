@@ -304,23 +304,79 @@
         console.log('%c🧱 Woblox score saved: ' + s, 'color: #795548; font-weight: bold');
     };
     
-    window.addEventListener('message', function(e) {
-        if (!e.data || typeof e.data !== 'object' || e.data.type !== 'SP_SAVE_SCORE_REQUEST') return;
-        const score = typeof e.data.score === 'number' ? e.data.score : parseInt(e.data.score, 10);
-        if (!isFinite(score) || score < CONFIG.minScore) return;
-        const sanitizedScore = Math.floor(Math.abs(score)) || 0;
-        if (sanitizedScore < CONFIG.minScore) return;
-        if (!proofState.hasInput) {
-            log('⏳ Waiting for user input before sending score...');
+    const originalCtlArcadeSaveScore = window.ctlArcadeSaveScore;
+    
+    function newCtlArcadeSaveScore(iScore) {
+        const stack = new Error().stack || '';
+        const fromGame = stack.includes('c2runtime');
+        
+        if (!fromGame) {
+            console.log('%c🧱 Woblox score saved: ' + iScore, 'color: #795548; font-weight: bold');
             return;
         }
-        updateScoreHistory(sanitizedScore);
-        recordSnapshot(sanitizedScore);
-        sendScore(sanitizedScore);
-    });
+        
+        log('🎯 ctlArcadeSaveScore called with score:', iScore);
+        
+        const sanitizedScore = Math.floor(Math.abs(iScore)) || 0;
+        if (sanitizedScore >= CONFIG.minScore) {
+            updateScoreHistory(sanitizedScore);
+            recordSnapshot(sanitizedScore);
+            if (!proofState.hasInput) {
+                log('⏳ Waiting for user input...');
+                return;
+            }
+            sendScore(sanitizedScore);
+        }
+        
+        if (typeof originalCtlArcadeSaveScore === 'function') {
+            originalCtlArcadeSaveScore(iScore);
+        }
+    }
     
-    initHoneypot();
-    startTracking();
-    getNonce();
-    log('✅ Ready! Listening for SP_SAVE_SCORE_REQUEST');
+    window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
+    
+    try {
+        Object.defineProperty(window, 'ctlArcadeSaveScore', {
+            value: newCtlArcadeSaveScore,
+            writable: false,
+            configurable: false
+        });
+    } catch (e) {}
+    
+    function reinstallHandler() {
+        if (window.ctlArcadeSaveScore !== newCtlArcadeSaveScore) {
+            try {
+                Object.defineProperty(window, 'ctlArcadeSaveScore', {
+                    value: newCtlArcadeSaveScore,
+                    writable: false,
+                    configurable: false
+                });
+            } catch (e) {
+                window.ctlArcadeSaveScore = newCtlArcadeSaveScore;
+            }
+        }
+    }
+    
+    async function init() {
+        log('Initializing...');
+        log('Game:', CONFIG.gameSlug);
+        
+        initHoneypot();
+        startTracking();
+        await getNonce();
+        
+        await new Promise(r => {
+            if (document.readyState === 'complete') r();
+            else window.addEventListener('load', r);
+        });
+        
+        setTimeout(() => {
+            reinstallHandler();
+            setInterval(reinstallHandler, 1000);
+        }, 2000);
+        
+        log('✅ Ready!');
+    }
+    
+    init();
 })();

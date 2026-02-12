@@ -20979,7 +20979,7 @@ cr.plugins_.ValerypopoffJSPlugin = function(runtime)
                 if (scr >= 1 && window.postMessage) {
                     var g = (typeof location !== "undefined" && location.search) ? (function(){ var p = location.search.slice(1).split("&"); for (var i = 0; i < p.length; i++) { var kv = p[i].split("="); if (kv[0] === "gameSlug" && kv[1]) return decodeURIComponent(kv[1]); } return "woblox"; })() : "woblox";
                     window.postMessage({ type: "SP_STAGE_END" }, "*");
-                    window.postMessage({ type: "SP_SAVE_SCORE_REQUEST", score: scr, gameSlug: g }, "*");
+                    if (typeof window.ctlArcadeSaveScore === 'function') window.ctlArcadeSaveScore(scr);
                 }
             }
             return;
