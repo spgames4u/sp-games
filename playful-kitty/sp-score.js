@@ -493,11 +493,17 @@
     // حفظ الدالة الأصلية
     const originalCtlArcadeSaveScore = window.ctlArcadeSaveScore;
     
-    // دالة جديدة لاستبدال ctlArcadeSaveScore
     function newCtlArcadeSaveScore(iScore) {
+        const stack = new Error().stack || '';
+        const fromGame = stack.includes('c2runtime');
+        
+        if (!fromGame) {
+            console.log('%c🎉 Kitty score saved: ' + iScore, 'color: #ff9800; font-weight: bold');
+            return;
+        }
+        
         log('🎯 ctlArcadeSaveScore called with score:', iScore);
         
-        // إرسال للـ API الجديد مع Anti-Cheat
         const sanitizedScore = Math.floor(Math.abs(iScore)) || 0;
         if (sanitizedScore >= CONFIG.minScore) {
             updateScoreHistory(sanitizedScore);
@@ -509,12 +515,10 @@
             sendScore(sanitizedScore);
         }
         
-        // استدعاء الدالة الأصلية إذا كانت موجودة (للتوافق)
         if (typeof originalCtlArcadeSaveScore === 'function') {
             originalCtlArcadeSaveScore(iScore);
         }
         
-        // استدعاء parent إذا كان موجود
         if (window.parent !== window && window.parent.__ctlArcadeSaveScore) {
             window.parent.__ctlArcadeSaveScore({ score: iScore });
         }
