@@ -239,9 +239,6 @@
                     if (v) { const n = parseInt(v, 10); if (!isNaN(n) && n > 0) { if (k === 'hero_shooter_level') roleLv = Math.max(roleLv, n); score = Math.max(score, n); } }
                 }
             } catch (e) {}
-            if (typeof window.__SP_LAST_SCORE === 'number' && window.__SP_LAST_SCORE > 0) {
-                score = Math.max(score, window.__SP_LAST_SCORE);
-            }
             if (roleLv > 0) score = Math.max(score, roleLv * 1000);
         } catch (e) { log('extractScore error:', e); }
         return Math.floor(score) || 0;

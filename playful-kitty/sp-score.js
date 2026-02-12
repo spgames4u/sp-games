@@ -1,9 +1,13 @@
 /**
  * sp-score.js - Score Bridge for Construct 2 Games with Anti-Cheat
- * v4.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot
+ * v6.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot + Decoy + Snapshots
  * 
  * هذا الملف مخصص لألعاب Construct 2
  * يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API مع نظام Anti-Cheat
+ * 
+ * الطبقات الست:
+ * 1. Nonce | 2. Proof | 3. Honeypot | 4. Origin Check (سيرفر)
+ * 5. Decoy | 6. Snapshots
  */
 
 (function() {
@@ -46,6 +50,23 @@
         historyLength: 0,
         historySpanMs: 0
     };
+    
+    // ==================== Snapshots (Score Timeline) ====================
+    const SNAP_CONFIG = {
+        maxSnapshots: 10,
+        minInterval: 1000,
+    };
+    let snapshots = [];
+    let lastSnapTime = 0;
+    
+    function recordSnapshot(score) {
+        const now = Date.now();
+        if (now - lastSnapTime < SNAP_CONFIG.minInterval) return;
+        if (snapshots.length > 0 && snapshots[snapshots.length - 1].s === score) return;
+        snapshots.push({ t: now, s: score });
+        lastSnapTime = now;
+        if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+    }
     
     // ==================== Honeypot ====================
     const honeypotKeys = ['score_cache_v2', 'profile_state_v1', 'ui_sync_hint'];
@@ -309,9 +330,6 @@
         isSending = true;
         log('📤 Sending score:', score);
         
-        // Update score history
-        updateScoreHistory(score);
-        
         // تحديث عدادات الوقت قبل الإرسال (للمساعدة في قياس presence)
         if (proofState.visibleStart && !document.hidden) {
             proofState.visibleMs += now - proofState.visibleStart;
@@ -354,6 +372,12 @@
             proofSummary
         });
         
+        // Snapshot: آخر لقطة قبل الإرسال
+        if (snapshots.length === 0 || snapshots[snapshots.length - 1].s !== score) {
+            snapshots.push({ t: Date.now(), s: score });
+            if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+        }
+        
         try {
             const response = await fetch(CONFIG.apiUrl, {
                 method: 'POST',
@@ -364,7 +388,8 @@
                     score: score,
                     nonce: currentNonce,
                     proof: proofData,
-                    honeypotTouched: honeypotTouched
+                    honeypotTouched: honeypotTouched,
+                    snapshots: snapshots.map(s => ({ t: s.t, s: s.s }))
                 })
             });
             
@@ -376,6 +401,8 @@
                     lastSentTime = now;
                     currentNonce = null; // Consumed
                     resetProof();
+                    snapshots = [];
+                    lastSnapTime = 0;
                     
                     // Get new nonce for next time
                     setTimeout(() => getNonce(), 100);
@@ -457,6 +484,12 @@
         setTimeout(() => div.remove(), 3500);
     }
     
+    // ==================== Decoy (Layer 5) ====================
+    // دالة وهمية — الغشاش قد يبحث عنها ويظن إنها تحفظ
+    window.__ctlArcadeSaveScore = function(s) {
+        console.log('%c🎉 Kitty score saved: ' + s, 'color: #ff9800; font-weight: bold');
+    };
+    
     // حفظ الدالة الأصلية
     const originalCtlArcadeSaveScore = window.ctlArcadeSaveScore;
     
@@ -467,10 +500,11 @@
         // إرسال للـ API الجديد مع Anti-Cheat
         const sanitizedScore = Math.floor(Math.abs(iScore)) || 0;
         if (sanitizedScore >= CONFIG.minScore) {
-            // لا ترسل إذا لم يكن هناك input بعد (منع إرسال سكور قديم)
+            updateScoreHistory(sanitizedScore);
+            recordSnapshot(sanitizedScore);
             if (!proofState.hasInput) {
                 log('⏳ Waiting for user input before sending score...');
-                return; // انتظر حتى يكون هناك تفاعل
+                return;
             }
             sendScore(sanitizedScore);
         }
