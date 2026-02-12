@@ -10,8 +10,8 @@
         const params = new URLSearchParams(location.search);
         if (params.get('gameSlug')) return params.get('gameSlug');
         const parts = location.pathname.split('/').filter(Boolean);
-        if (parts.length === 0) return 'unknown';
-        return parts[parts.length - 1] || parts[0] || 'unknown';
+        if (parts.length === 0) return 'flower-fun';
+        return parts[parts.length - 1] || parts[0] || 'flower-fun';
     }
     
     const guardKey = '__SP_SCORE_RUNNING_' + getGameSlug();

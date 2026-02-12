@@ -8,7 +8,7 @@
     
     const guardKey = '__SP_SCORE_RUNNING_' + (() => {
         const parts = location.pathname.split('/').filter(Boolean);
-        return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'unknown';
+        return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'ninja-dash';
     })();
     if (window[guardKey]) {
         console.warn('[SP-Score] Already running, skipping duplicate instance');
@@ -25,7 +25,7 @@
             : 'https://new.sp.games/api/games/nonce',
         gameSlug: (() => {
             const parts = location.pathname.split('/').filter(Boolean);
-            return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'unknown';
+            return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'ninja-dash';
         })(),
         pollInterval: 3000,
         minScore: 1,
@@ -571,7 +571,7 @@
         pollIntervalId = setInterval(() => {
             const newGameSlug = (() => {
                 const parts = location.pathname.split('/').filter(Boolean);
-                return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'unknown';
+                return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'ninja-dash';
             })();
             
             if (newGameSlug !== currentGameSlug) {

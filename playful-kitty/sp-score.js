@@ -1,17 +1,21 @@
 /**
- * sp-score.js - Score Bridge for Construct 2 Games with Anti-Cheat
- * v6.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot + Decoy + Snapshots
- * 
- * هذا الملف مخصص لألعاب Construct 2
- * يستمع لاستدعاءات ctlArcadeSaveScore ويرسل النتيجة للـ API مع نظام Anti-Cheat
- * 
- * الطبقات الست:
- * 1. Nonce | 2. Proof | 3. Honeypot | 4. Origin Check (سيرفر)
- * 5. Decoy | 6. Snapshots
+ * sp-score.js - Score Bridge for sp.games
+ * v6.0 - Game Integration Module
  */
 
 (function() {
     'use strict';
+    
+    function getGameSlug() {
+        const params = new URLSearchParams(location.search);
+        if (params.get('gameSlug')) return params.get('gameSlug');
+        const parts = location.pathname.split('/').filter(Boolean);
+        return parts[parts.length - 1] || 'playful-kitty';
+    }
+    
+    const guardKey = '__SP_SCORE_RUNNING_' + getGameSlug();
+    if (window[guardKey]) return;
+    window[guardKey] = true;
     
     const CONFIG = {
         apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
@@ -20,14 +24,9 @@
         nonceUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
             ? 'http://localhost:4000/api/games/nonce'
             : 'https://new.sp.games/api/games/nonce',
-        gameSlug: (() => {
-            const params = new URLSearchParams(location.search);
-            if (params.get('gameSlug')) return params.get('gameSlug');
-            const parts = location.pathname.split('/').filter(Boolean);
-            return parts[0] === 'games' ? (parts[1] || 'playful-kitty') : (parts[0] || 'playful-kitty');
-        })(),
+        gameSlug: getGameSlug(),
         minScore: 1,
-        cooldownMs: 30000, // 30 ثانية
+        cooldownMs: 30000,
         debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
     };
     
@@ -484,8 +483,6 @@
         setTimeout(() => div.remove(), 3500);
     }
     
-    // ==================== Decoy (Layer 5) ====================
-    // دالة وهمية — الغشاش قد يبحث عنها ويظن إنها تحفظ
     window.__ctlArcadeSaveScore = function(s) {
         console.log('%c🎉 Kitty score saved: ' + s, 'color: #ff9800; font-weight: bold');
     };
