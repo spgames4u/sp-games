@@ -10,7 +10,8 @@
         const params = new URLSearchParams(location.search);
         if (params.get('gameSlug')) return params.get('gameSlug');
         const parts = location.pathname.split('/').filter(Boolean);
-        const gameIdx = parts.indexOf('game.html');
+        let gameIdx = parts.indexOf('game.html');
+        if (gameIdx === -1) gameIdx = parts.indexOf('game');
         if (gameIdx > 0) return parts[gameIdx - 1];
         return parts[parts.length - 1] || 'hero-shooter';
     }
