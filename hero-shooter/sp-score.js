@@ -1,19 +1,22 @@
 /**
- * sp-score.js - Score Bridge for Hero-Shooter (Cocos2d-JS) with Anti-Cheat
- * v1.0 - نظام Anti-Cheat: Nonce + Proof + Honeypot
- * 
- * هذا الملف مخصص لألعاب Cocos2d-JS/Cocos Creator
- * يعترض gameEndLoad ويستخرج النتيجة ثم يرسلها للنظام
+ * sp-score.js - Score Bridge for sp.games
+ * v6.0 - Game Integration Module
  */
 
 (function() {
     'use strict';
     
-    const guardKey = '__SP_SCORE_RUNNING_hero-shooter';
-    if (window[guardKey]) {
-        console.warn('[SP-Score] Already running, skipping');
-        return;
+    function getGameSlug() {
+        const params = new URLSearchParams(location.search);
+        if (params.get('gameSlug')) return params.get('gameSlug');
+        const parts = location.pathname.split('/').filter(Boolean);
+        const gameIdx = parts.indexOf('game.html');
+        if (gameIdx > 0) return parts[gameIdx - 1];
+        return parts[parts.length - 1] || 'hero-shooter';
     }
+    
+    const guardKey = '__SP_SCORE_RUNNING_' + getGameSlug();
+    if (window[guardKey]) return;
     window[guardKey] = true;
     
     const CONFIG = {
@@ -23,17 +26,7 @@
         nonceUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
             ? 'http://localhost:4000/api/games/nonce'
             : 'https://new.sp.games/api/games/nonce',
-        gameSlug: (() => {
-            const params = new URLSearchParams(location.search);
-            if (params.get('gameSlug')) return params.get('gameSlug');
-            const parts = location.pathname.split('/').filter(Boolean);
-            const gameIdx = parts.indexOf('game.html');
-            if (gameIdx > 0) return parts[gameIdx - 1];
-            if (parts.includes('hero-shooter')) return 'hero-shooter';
-            const gi = parts.indexOf('games');
-            if (gi >= 0 && parts[gi + 1]) return parts[gi + 1];
-            return parts[parts.length - 1] || 'hero-shooter';
-        })(),
+        gameSlug: getGameSlug(),
         minScore: 1,
         cooldownMs: 30000,
         debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -48,7 +41,7 @@
     let lastFailedTime = 0;
     let lastRoleLv = 0;
     
-    const proofState = {
+    let proofState = {
         visibleStart: null,
         visibleMs: 0,
         focusStart: null,
@@ -58,6 +51,19 @@
         historyLength: 0,
         historySpanMs: 0
     };
+    
+    const SNAP_CONFIG = { maxSnapshots: 10, minInterval: 1000 };
+    let snapshots = [];
+    let lastSnapTime = 0;
+    
+    function recordSnapshot(score) {
+        const now = Date.now();
+        if (now - lastSnapTime < SNAP_CONFIG.minInterval) return;
+        if (snapshots.length > 0 && snapshots[snapshots.length - 1].s === score) return;
+        snapshots.push({ t: now, s: score });
+        lastSnapTime = now;
+        if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+    }
     
     const honeypotKeys = ['score_cache_v2', 'profile_state_v1', 'ui_sync_hint'];
     const originalHoneypot = {};
@@ -76,10 +82,25 @@
         honeypotKeys.forEach(key => {
             try {
                 const stored = localStorage.getItem(key);
-                if (stored !== null && stored !== originalHoneypot[key]) touched = true;
+                if (stored === null) return;
+                if (stored !== originalHoneypot[key]) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (!parsed || typeof parsed.v !== 'number' || parsed.v !== 1 ||
+                            typeof parsed.t !== 'number' || typeof parsed.n !== 'string' ||
+                            stored !== originalHoneypot[key]) touched = true;
+                    } catch (e) { touched = true; }
+                }
             } catch (e) {}
         });
         return touched;
+    }
+    
+    function resetProof() {
+        proofState = {
+            visibleStart: null, visibleMs: 0, focusStart: null, focusMs: 0,
+            hasInput: proofState.hasInput, history: [], historyLength: 0, historySpanMs: 0
+        };
     }
     
     function startTracking() {
@@ -98,9 +119,40 @@
                 proofState.focusStart = null;
             }
         });
-        ['pointerdown', 'keydown', 'touchstart', 'mousedown'].forEach(ev => {
-            document.addEventListener(ev, () => { proofState.hasInput = true; }, { passive: true, capture: true });
+        const inputEvents = ['pointerdown', 'keydown', 'touchstart', 'mousedown'];
+        let inputDetectedLogged = false;
+        inputEvents.forEach(event => {
+            document.addEventListener(event, () => {
+                if (!proofState.hasInput) {
+                    proofState.hasInput = true;
+                    if (!inputDetectedLogged) { log('✅ Input detected:', event); inputDetectedLogged = true; }
+                }
+            }, { once: false, passive: true, capture: true });
         });
+        if (window.parent !== window) {
+            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games'];
+            window.addEventListener('message', (e) => {
+                let originAllowed = false;
+                try {
+                    const eOrigin = e.origin.toLowerCase();
+                    for (const allowed of allowedOrigins) {
+                        const allowedLower = allowed.toLowerCase();
+                        if (eOrigin === allowedLower || (allowedLower.includes('localhost') && eOrigin.startsWith('http://localhost')) ||
+                            (allowedLower.includes('127.0.0.1') && eOrigin.startsWith('http://127.0.0.1'))) {
+                            originAllowed = true;
+                            break;
+                        }
+                    }
+                } catch (err) { return; }
+                if (!originAllowed) return;
+                if (e.data && typeof e.data === 'object' && (e.data.type === 'SP_INPUT' || e.data.type === 'user_interaction' || e.data.hasInput === true)) {
+                    if (!proofState.hasInput) {
+                        proofState.hasInput = true;
+                        if (!inputDetectedLogged) { log('✅ Input detected via postMessage'); inputDetectedLogged = true; }
+                    }
+                }
+            });
+        }
         if (!document.hidden) proofState.visibleStart = Date.now();
         if (document.hasFocus && document.hasFocus()) proofState.focusStart = Date.now();
     }
@@ -117,31 +169,38 @@
     
     async function getNonce() {
         try {
-            const r = await fetch(`${CONFIG.nonceUrl}?gameSlug=${encodeURIComponent(CONFIG.gameSlug)}`, {
+            const response = await fetch(`${CONFIG.nonceUrl}?gameSlug=${encodeURIComponent(CONFIG.gameSlug)}`, {
                 method: 'GET', credentials: 'include'
             });
-            if (r.ok) {
-                const d = await r.json();
-                if (d.nonce) { currentNonce = d.nonce; return true; }
+            if (response.ok) {
+                const data = await response.json();
+                if (data.nonce) {
+                    currentNonce = data.nonce;
+                    log('🔑 Nonce received');
+                    return true;
+                }
             }
-        } catch (e) {}
+        } catch (e) { log('⚠️ Nonce request failed:', e.message); }
         return false;
     }
     
-    const log = CONFIG.debug ? (...a) => console.log('%c[SP-Score]', 'color:#00c853;font-weight:bold', ...a) : () => {};
+    const log = CONFIG.debug ? (...args) => console.log('%c[SP-Score]', 'color: #00c853; font-weight: bold', ...args) : () => {};
     
     function hookTjSDK() {
         if (typeof tjSDK !== 'undefined' && tjSDK.onEvent && !tjSDK.onEvent._spWrapped) {
             const orig = tjSDK.onEvent;
             tjSDK.onEvent = function(ev, args) {
-                if ((ev === 'role_up' || ev === 'enter_game') && args) {
+                const stack = new Error().stack || '';
+                const fromSDK = stack.includes('tjSDK') || stack.includes('onEvent') || stack.includes('cc.') || stack.includes('kit');
+                if (fromSDK && (ev === 'role_up' || ev === 'enter_game') && args) {
                     const lv = parseInt(args.rolelv || args.roleLv || args, 10);
                     if (!isNaN(lv) && lv > 0) {
                         lastRoleLv = Math.max(lastRoleLv, lv);
                         const score = lv * 1000;
-                        console.log('%c[SP-Score] ' + ev + ' captured, rolelv: ' + lv + ' → score: ' + score, 'color:#00c853;font-weight:bold');
+                        log('🎯 tjSDK captured:', ev, 'rolelv:', lv, '→ score:', score);
                         updateScoreHistory(score);
-                        sendScore(score);
+                        recordSnapshot(score);
+                        if (proofState.hasInput) sendScore(score);
                     }
                 }
                 return orig.apply(this, arguments);
@@ -191,7 +250,6 @@
                             score = Math.max(score, g[k]);
                         }
                     }
-                    if (CONFIG.debug && score === 0) log('kit.game keys:', Object.keys(g).filter(k => typeof g[k] === 'number'));
                 }
             }
             if (typeof menuManager !== 'undefined' && menuManager) {
@@ -249,16 +307,16 @@
         if (isSending || score < CONFIG.minScore) return false;
         if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) return false;
         if (score === lastFailedScore && (now - lastFailedTime) < 10000) return false;
-        const fd = failedAttempts.get(score);
-        if (fd && fd.count >= 3 && (now - fd.lastAttempt) < 10000) return false;
+        const failedData = failedAttempts.get(score);
+        if (failedData && failedData.count >= 3 && (now - failedData.lastAttempt) < 10000) return false;
         
         if (!currentNonce) {
-            const got = await getNonce();
-            if (!got) return false;
+            const gotNonce = await getNonce();
+            if (!gotNonce) return false;
         }
         
         isSending = true;
-        log('Sending score:', score);
+        log('📤 Sending score:', score);
         
         if (proofState.visibleStart && !document.hidden) {
             proofState.visibleMs += now - proofState.visibleStart;
@@ -269,54 +327,78 @@
             proofState.focusStart = now;
         }
         
+        const currentVisibleMs = proofState.visibleMs + (proofState.visibleStart ? (now - proofState.visibleStart) : 0);
+        const currentFocusMs = proofState.focusMs + (proofState.focusStart ? (now - proofState.focusStart) : 0);
+        const honeypotTouched = checkHoneypot();
         const proofData = {
-            visibleMs: Math.min(proofState.visibleMs + (proofState.visibleStart ? now - proofState.visibleStart : 0), 43200000),
-            focusMs: Math.min(proofState.focusMs + (proofState.focusStart ? now - proofState.focusStart : 0), 43200000),
+            visibleMs: Math.min(currentVisibleMs, 43200000),
+            focusMs: Math.min(currentFocusMs, 43200000),
             hasInput: proofState.hasInput,
             historyLength: Math.min(proofState.historyLength, 5000),
             historySpanMs: Math.min(proofState.historySpanMs, 43200000)
         };
         
+        if (snapshots.length === 0 || snapshots[snapshots.length - 1].s !== score) {
+            snapshots.push({ t: Date.now(), s: score });
+            if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
+        }
+        
         try {
-            const r = await fetch(CONFIG.apiUrl, {
+            const response = await fetch(CONFIG.apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
                     gameSlug: CONFIG.gameSlug,
-                    score,
+                    score: score,
                     nonce: currentNonce,
                     proof: proofData,
-                    honeypotTouched: checkHoneypot()
+                    honeypotTouched: honeypotTouched,
+                    snapshots: snapshots.map(s => ({ t: s.t, s: s.s }))
                 })
             });
             
-            if (r.ok) {
-                const result = await r.json();
+            if (response.ok) {
+                const result = await response.json();
                 if (result.ok !== false) {
-                    log('Score saved!', result);
+                    log('✅ Score saved!', result);
                     lastSentScore = score;
                     lastSentTime = now;
                     currentNonce = null;
+                    resetProof();
+                    snapshots = [];
+                    lastSnapTime = 0;
+                    setTimeout(() => getNonce(), 100);
                     if (window.parent !== window) {
-                        window.parent.postMessage({ type: 'SP_SCORE_SAVED', score, result, gameSlug: CONFIG.gameSlug }, '*');
+                        window.parent.postMessage({ type: 'SP_SCORE_SAVED', score: score, result: result, gameSlug: CONFIG.gameSlug }, '*');
                     }
-                    showNotification(score, !!result.newHighScore);
+                    if (result.newHighScore) showNotification(score);
                     return true;
+                } else {
+                    log('⚠️ Save failed:', result.error);
                 }
+            } else {
+                log('❌ HTTP Error:', response.status);
             }
-            const f = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-            f.count++; f.lastAttempt = now;
-            failedAttempts.set(score, f);
-            lastFailedScore = score; lastFailedTime = now;
+            const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
+            fd.count++;
+            fd.lastAttempt = Date.now();
+            failedAttempts.set(score, fd);
+            lastFailedScore = score;
+            lastFailedTime = Date.now();
             currentNonce = null;
-            log('Save failed');
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            for (const [s, data] of failedAttempts.entries()) {
+                if (data.lastAttempt < fiveMinutesAgo) failedAttempts.delete(s);
+            }
         } catch (e) {
-            log('Error:', e.message);
-            const f = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-            f.count++; f.lastAttempt = now;
-            failedAttempts.set(score, f);
-            lastFailedScore = score; lastFailedTime = now;
+            log('❌ Error:', e.message);
+            const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
+            fd.count++;
+            fd.lastAttempt = Date.now();
+            failedAttempts.set(score, fd);
+            lastFailedScore = score;
+            lastFailedTime = Date.now();
             currentNonce = null;
         } finally {
             isSending = false;
@@ -324,18 +406,22 @@
         return false;
     }
     
-    function showNotification(score, isNewHigh) {
+    function showNotification(score) {
         if (window.innerWidth < 300) return;
         const div = document.createElement('div');
-        const isAr = (document.documentElement.lang || navigator.language || '').startsWith('ar');
-        const msg = isNewHigh 
-            ? (isAr ? '🎉 رقم قياسي جديد!' : '🎉 New High Score!')
-            : (isAr ? '✅ نتيجتك' : '✅ Your Score');
-        div.innerHTML = msg + '<br><b>' + score.toLocaleString() + '</b>';
-        div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4CAF50,#45a049);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + (isAr ? 'rtl' : 'ltr');
+        const lang = document.documentElement.lang || navigator.language || 'en';
+        const isArabic = lang.startsWith('ar');
+        const message = isArabic ? '🎉 رقم قياسي!' : '🎉 New High Score!';
+        const direction = isArabic ? 'rtl' : 'ltr';
+        div.innerHTML = message + '<br><b>' + score.toLocaleString() + '</b>';
+        div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + direction + ';';
         document.body.appendChild(div);
-        setTimeout(function() { div.remove(); }, 3500);
+        setTimeout(() => div.remove(), 3500);
     }
+    
+    window.__gameEndLoad = function() {
+        console.log('%c🎮 Hero score saved', 'color: #795548; font-weight: bold');
+    };
     
     function hookGameEndLoad() {
         if (typeof gameEndLoad !== 'function') {
@@ -345,35 +431,47 @@
         }
         const orig = gameEndLoad;
         window.gameEndLoad = function() {
+            const stack = new Error().stack || '';
+            const fromGame = stack.includes('gameEndLoad') || stack.includes('boot') || stack.includes('cocos') || stack.includes('cc.') || stack.includes('kit');
+            
+            if (!fromGame) {
+                console.log('%c🎮 Hero score saved', 'color: #795548; font-weight: bold');
+                orig.apply(this, arguments);
+                return;
+            }
+            
             const score = extractScore();
             log('gameEndLoad called, extracted score:', score);
-            if (score >= CONFIG.minScore && proofState.hasInput) {
+            if (score >= CONFIG.minScore) {
                 updateScoreHistory(score);
-                sendScore(score);
-            } else if (score > 0 && !proofState.hasInput) {
-                updateScoreHistory(score);
-                sendScore(score);
+                recordSnapshot(score);
+                if (!proofState.hasInput) {
+                    log('⏳ Waiting for user input before sending score...');
+                } else {
+                    sendScore(score);
+                }
             }
             orig.apply(this, arguments);
         };
         log('gameEndLoad hooked');
     }
     
-    function init() {
-        log('Initializing (Cocos Hero-Shooter)...');
+    async function init() {
+        log('Initializing...');
         log('Game:', CONFIG.gameSlug);
         initHoneypot();
         startTracking();
         hookTjSDK();
         const tjCheck = setInterval(hookTjSDK, 500);
-        setTimeout(function() { clearInterval(tjCheck); }, 10000);
+        setTimeout(() => { clearInterval(tjCheck); }, 10000);
         if (document.readyState === 'complete') {
             hookGameEndLoad();
         } else {
             window.addEventListener('load', () => hookGameEndLoad());
         }
         setTimeout(hookGameEndLoad, 2000);
-        getNonce();
+        await getNonce();
+        log('✅ Ready! Listening for gameEndLoad');
     }
     
     init();
