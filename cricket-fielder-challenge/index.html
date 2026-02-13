@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <link rel="stylesheet" href="css/reset.css" type="text/css">
+        <link rel="stylesheet" href="css/main.css" type="text/css">
+        <link rel="stylesheet" href="css/orientation_utils.css" type="text/css">
+        <link rel="stylesheet" href="css/ios_fullscreen.css" type="text/css">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui" />
+        <meta name="msapplication-tap-highlight" content="no"/>
+
+        <script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="sp-score.js" data-cfasync="false"></script>
+        <script type="text/javascript" src="js/createjs.min.js"></script>
+        <script type="text/javascript" src="js/howler.min.js"></script>
+        <script type="text/javascript" src="js/platform.js"></script>
+        <script type="text/javascript" src="js/ios_fullscreen.js"></script>
+        <script type="text/javascript" src="js/screenfull.js"></script>
+        <script type="text/javascript" src="js/ctl_utils.js"></script>
+        <script type="text/javascript" src="js/sprite_lib.js"></script>
+        <script type="text/javascript" src="js/settings.js"></script>
+        <script type="text/javascript" src="js/CLang.js"></script>
+        <script type="text/javascript" src="js/CPreloader.js"></script>
+        <script type="text/javascript" src="js/CMain.js"></script>
+        <script type="text/javascript" src="js/CTextButton.js"></script>
+        <script type="text/javascript" src="js/CToggle.js"></script>
+        <script type="text/javascript" src="js/CGfxButton.js"></script>
+        <script type="text/javascript" src="js/CMenu.js"></script>
+        <script type="text/javascript" src="js/CInterface.js"></script>
+        <script type="text/javascript" src="js/CEndPanel.js"></script>
+        <script type="text/javascript" src="js/CCreditsPanel.js"></script>
+        <script type="text/javascript" src="js/CTeamChoose.js"></script>
+        <script type="text/javascript" src="js/CPause.js"></script>
+        <script type="text/javascript" src="js/CAreYouSurePanel.js"></script>
+        <script type="text/javascript" src="js/cannon.js"></script>
+        <script type="text/javascript" src="js/cannon.demo.js"></script>
+        <script type="text/javascript" src="js/CBall.js"></script>
+        <script type="text/javascript" src="js/CGame.js"></script>
+        <script type="text/javascript" src="js/CGlove.js"></script>
+        <script type="text/javascript" src="js/CScenario.js"></script>
+        <script type="text/javascript" src="js/dat.gui.js"></script>
+        <script type="text/javascript" src="js/Detector.js"></script>
+        <script type="text/javascript" src="js/smoothie.js"></script>
+        <script type="text/javascript" src="js/Stats.js"></script>
+        <script type="text/javascript" src="js/Three.js"></script>
+        <script type="text/javascript" src="js/TrackballControls.js"></script>
+        <script type="text/javascript" src="js/COpponent.js"></script>
+        <script type="text/javascript" src="js/CHelpPanel.js"></script>
+        <script type="text/javascript" src="js/CLoadingScreen.js"></script>
+        <script type="text/javascript" src="js/CBallStatic.js"></script>
+        
+
+    </head>
+    <body ondragstart="return false;" ondrop="return false;" >
+        <div style="position: fixed; background-color: transparent; top: 0px; left: 0px; width: 100%; height: 100%"></div>
+        <script>
+            $(document).ready(function () {
+                var oMain = new CMain({
+                    lives: 3, //THIS PARAM SET THE NUMBER OF LIVES
+                    score_ball_caught: 100, //ADD SCORE WHEN BALL IS CAUGHT, SCORE IS SUBTRACTED BY PRECISION OF CAUGHT
+                    ball_force_left_right_start: 0.1, //START FORCE DIRECTION LEFT RIGHT
+                    ball_force_left_right_step: 0.07, //ADD FORCE TO DIRECTION LEFT RIGHT 
+                    ball_force_left_right_max: 0.55, //MAX FORCE TO BALL DIRECTION
+                    ball_force_up_start: 2, //START FORCE DIRECTION UP
+                    ball_force_up_step: 0.1, //ADD FORCE TO FORCE UP
+                    ball_force_up_max: 2.3, //MAX FORCE TO BALL DIRECTION UP
+                    ball_start_velocity: 20, //START FORCE APPLY TO BALL
+                    ball_step_velocity: 0.5, //STEP FORCE APPLY TO BALL
+                    ball_max_velocity: 23, //MAX FORCE APPLY TO BALL
+                    score_perfect_ball_saved: 10, //ADD SCRORE WHEN THE GUANTES SAVE BALL LOCKED
+                    perfect_ball_saved_point: {x: 1.3, z: 1.4}, //POINT COLLISION FOR LOCKED BALL IN HANDS
+                    fullscreen:true,        //SET THIS TO FALSE IF YOU DON'T WANT TO SHOW FULLSCREEN BUTTON
+                    check_orientation:true, //SET TO FALSE IF YOU DON'T WANT TO SHOW ORIENTATION ALERT ON MOBILE DEVICES                 
+                    num_levels_for_ads: 2//NUMBER OF TURNS PLAYED BEFORE AD SHOWING //
+                            //////// THIS FEATURE  IS ACTIVATED ONLY WITH CTL ARCADE PLUGIN./////////////////////////// 
+                            /////////////////// YOU CAN GET IT AT: ///////////////////////////////////////////////////////// 
+                            // http://codecanyon.net/item/ctl-arcade-wordpress-plugin/13856421 ///////////
+                });
+
+
+                $(oMain).on("start_session", function (evt) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeStartSession();
+                    }
+                });
+
+                $(oMain).on("end_session", function (evt) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeEndSession();
+                    }
+                });
+
+                $(oMain).on("start_level", function (evt, iLevel) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeStartLevel({level: iLevel});
+                    }
+                });
+
+                $(oMain).on("restart_level", function (evt, iLevel) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeRestartLevel({level: iLevel});
+                    }
+                });
+
+                $(oMain).on("end_level", function (evt, iLevel) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeEndLevel({level: iLevel});
+                    }
+                });
+
+                $(oMain).on("save_score", function (evt, iScore, szMode) {
+                    if (typeof window.ctlArcadeSaveScore === 'function') {
+                        window.ctlArcadeSaveScore(iScore);
+                    }
+                    if (getParamValue('ctl-arcade') === "true") {
+                        try {
+                            if (typeof parent.__ctlArcadeSaveScore === 'function') {
+                                parent.__ctlArcadeSaveScore({score: iScore, mode: szMode});
+                            }
+                        } catch (e) {}
+                    }
+                });
+
+                $(oMain).on("show_interlevel_ad", function (evt) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeShowInterlevelAD();
+                    }
+                });
+
+                $(oMain).on("share_event", function (evt, iScore) {
+                    if (getParamValue('ctl-arcade') === "true") {
+                        parent.__ctlArcadeShareEvent({img: TEXT_SHARE_IMAGE,
+                            title: TEXT_SHARE_TITLE,
+                            msg: TEXT_SHARE_MSG1 + iScore + TEXT_SHARE_MSG2,
+                            msg_share: TEXT_SHARE_SHARE1 + iScore + TEXT_SHARE_SHARE1});
+                    }
+                });
+
+                if (isIOS()) {
+                    setTimeout(function () {
+                        sizeHandler();
+                    }, 200);
+                } else {
+                    sizeHandler();
+                }
+            });
+
+        </script>
+        
+        <div class="check-fonts">
+            <p class="check-font-1">test 1</p>
+            <p class="check-font-2">test 2</p>
+        </div> 
+        
+        <canvas id="canvas" class='ani_hack' width="790" height="960"> </canvas>
+        <div data-orientation="portrait" class="orientation-msg-container"><p class="orientation-msg-text">Please rotate your device</p></div>
+        <div id="block_game" style="position: fixed; background-color: transparent; top: 0px; left: 0px; width: 100%; height: 100%; display:none"></div>
+
+    </body>
+</html>
