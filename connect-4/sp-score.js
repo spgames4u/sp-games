@@ -6,6 +6,25 @@
 (function() {
     'use strict';
     
+    window.__ctlArcadeSaveScore = function(data) {};
+    
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            var _origEval = window.eval;
+            window.eval = function(code) {
+                if (typeof code === 'string'
+                    && code.indexOf('parent.__ctlArcadeSaveScore') !== -1) {
+                    code = code.replace(
+                        /parent\.__ctlArcadeSaveScore/g,
+                        'window.__ctlArcadeSaveScore'
+                    );
+                }
+                return _origEval.call(window, code);
+            };
+            console.log('[sp-score] eval patch applied after game load');
+        }, 3000);
+    });
+    
     const guardKey = '__SP_SCORE_RUNNING_' + (
         new URLSearchParams(location.search).get('gameSlug')
         || (() => {
@@ -377,12 +396,14 @@
                     setTimeout(() => getNonce(), 100);
                     
                     if (window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'SP_SCORE_SAVED',
-                            score: score,
-                            result: result,
-                            gameSlug: CONFIG.gameSlug
-                        }, '*');
+                        try {
+                            window.parent.postMessage({
+                                type: 'SP_SCORE_SAVED',
+                                score: score,
+                                result: result,
+                                gameSlug: CONFIG.gameSlug
+                            }, '*');
+                        } catch (e) {}
                     }
                     
                     if (result.newHighScore) showNotification(score);
@@ -444,21 +465,10 @@
     
     window.__ctlArcadeSaveScore = newCtlArcadeSaveScore;
     
-    try {
-        if (typeof parent !== 'undefined' && parent !== null) {
-            parent.__ctlArcadeSaveScore = newCtlArcadeSaveScore;
-        }
-    } catch (e) {}
-    
     function reinstallHandler() {
         if (window.__ctlArcadeSaveScore !== newCtlArcadeSaveScore) {
             window.__ctlArcadeSaveScore = newCtlArcadeSaveScore;
         }
-        try {
-            if (typeof parent !== 'undefined' && parent !== null && parent.__ctlArcadeSaveScore !== newCtlArcadeSaveScore) {
-                parent.__ctlArcadeSaveScore = newCtlArcadeSaveScore;
-            }
-        } catch (e) {}
     }
     
     async function init() {
