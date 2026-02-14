@@ -5,7 +5,7 @@
     var DIR = [{ r: 0, c: 1 }, { r: 1, c: 0 }, { r: 1, c: 1 }, { r: -1, c: 1 }];
     var AR = 'ابتثجحخدذرزسشصضطظعغفقكلمنهويى';
     var EN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var MAX_TRY = 120;
+    var MAX_TRY = 200;
     var SND_CD = 160;
 
     /* ── حالة ── */
@@ -80,7 +80,7 @@
             if (w[i].length > mx) mx = w[i].length;
             tot += w[i].length;
         }
-        return Math.min(Math.max(mx, Math.ceil(Math.sqrt(tot * 2.2)), 5), 8);
+        return Math.min(Math.max(mx, Math.ceil(Math.sqrt(tot * 2.8)), 5), 8);
     }
 
     function updCtr() {
@@ -113,7 +113,7 @@
             var ok = true, i;
             for (i = 0; i < w.length; i++) {
                 var rr = sr + d.r * i, cc = sc + d.c * i;
-                if (rr < 0 || rr >= gs || cc < 0 || cc >= gs || (gd[rr][cc] !== null && gd[rr][cc] !== w[i])) { ok = false; break; }
+                if (rr < 0 || rr >= gs || cc < 0 || cc >= gs || gd[rr][cc] !== null) { ok = false; break; }
             }
             if (!ok) continue;
             for (i = 0; i < w.length; i++) gd[sr + d.r * i][sc + d.c * i] = w[i];
