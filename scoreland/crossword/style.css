@@ -1,0 +1,472 @@
+/* ══════════════════════════════════════════════
+   الكلمات المتقاطعة - ScoreLand Crossword
+   Premium Dark Theme with Gold & Emerald Accents
+   ══════════════════════════════════════════════ */
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root{
+    --bg:#070a14;
+    --bg2:#0c1020;
+    --surface:#111730;
+    --surface2:#161d3a;
+    --border:rgba(255,255,255,.06);
+    --border2:rgba(255,255,255,.1);
+    --gold:#d4a930;
+    --gold-dim:rgba(212,169,48,.15);
+    --gold-glow:rgba(212,169,48,.25);
+    --emerald:#22c55e;
+    --emerald-dim:rgba(34,197,94,.12);
+    --emerald-glow:rgba(34,197,94,.3);
+    --text:#f0f0f5;
+    --text-dim:rgba(255,255,255,.4);
+    --text-mid:rgba(255,255,255,.65);
+    --danger:#ef4444;
+    --cell-size:clamp(32px,8.5vw,44px);
+    --radius:12px;
+}
+
+html,body{
+    width:100%;height:100%;overflow:hidden;
+    font-family:'Cairo',sans-serif;
+    background:var(--bg);color:var(--text);
+}
+
+/* ── الشاشات ── */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+.screen.on{display:flex}
+
+/* ══════════════════
+   شاشة التحميل
+   ══════════════════ */
+#S0{background:var(--bg);z-index:100}
+.loader-wrap{display:flex;flex-direction:column;align-items:center;gap:20px}
+
+.cross-loader{
+    width:50px;height:50px;position:relative;
+}
+.cross-loader span{
+    position:absolute;background:var(--gold);border-radius:3px;
+    animation:crossPulse 1.2s ease-in-out infinite;
+}
+.cross-loader span:nth-child(1){width:50px;height:6px;top:22px;left:0;animation-delay:0s}
+.cross-loader span:nth-child(2){width:6px;height:50px;top:0;left:22px;animation-delay:.15s}
+.cross-loader span:nth-child(3){width:36px;height:4px;top:23px;left:7px;animation-delay:.3s;background:var(--emerald)}
+.cross-loader span:nth-child(4){width:4px;height:36px;top:7px;left:23px;animation-delay:.45s;background:var(--emerald)}
+
+@keyframes crossPulse{
+    0%,100%{opacity:.3;transform:scale(1)}
+    50%{opacity:1;transform:scale(1.05)}
+}
+
+#S0 p{font-size:.82rem;color:var(--text-dim);font-weight:600;letter-spacing:.5px}
+
+/* ══════════════════
+   شاشة اللعب
+   ══════════════════ */
+#S1.on{justify-content:flex-start;background:var(--bg)}
+
+.game-layout{
+    width:100%;max-width:500px;height:100%;margin:0 auto;
+    display:flex;flex-direction:column;
+    padding:10px 12px 0;
+    position:relative;
+}
+
+/* ── الهيدر ── */
+.game-hdr{
+    display:flex;align-items:center;gap:10px;
+    padding:4px 0 8px;flex-shrink:0;
+}
+.icon-btn{
+    background:rgba(255,255,255,.05);border:1px solid var(--border);
+    border-radius:8px;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--text-dim);
+    transition:all .2s;flex-shrink:0;
+}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn.off{opacity:.35}
+.icon-btn svg{width:16px;height:16px}
+
+.hdr-center{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hdr-title{
+    font-size:.95rem;font-weight:700;color:var(--text);
+    text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    line-height:1.2;
+}
+.progress-bar{
+    width:100%;height:3px;background:rgba(255,255,255,.06);
+    border-radius:3px;overflow:hidden;
+}
+.progress-fill{
+    height:100%;width:0;
+    background:linear-gradient(90deg,var(--emerald),var(--gold));
+    border-radius:3px;
+    transition:width .5s cubic-bezier(.25,.46,.45,.94);
+}
+
+.hdr-ctr{
+    font-size:.72rem;color:var(--gold);font-weight:700;
+    flex-shrink:0;background:var(--gold-dim);
+    padding:3px 10px;border-radius:20px;
+    border:1px solid rgba(212,169,48,.12);
+    min-width:42px;text-align:center;
+}
+
+/* ── منطقة اللعب ── */
+.play-area{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;
+    gap:8px;overflow:hidden;
+}
+
+/* ── حاوية الشبكة ── */
+.grid-container{
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    padding:6px 0;
+}
+
+/* ── الشبكة ── */
+.crossword-grid{
+    display:inline-grid;
+    gap:2px;
+    position:relative;
+}
+
+/* ── الخلايا ── */
+.cw-cell{
+    width:var(--cell-size);height:var(--cell-size);
+    position:relative;
+    border-radius:6px;
+    overflow:hidden;
+    transition:all .15s ease;
+}
+
+/* خلية فارغة (سوداء) */
+.cw-cell.blank{
+    background:transparent;
+    pointer-events:none;
+}
+
+/* خلية نشطة */
+.cw-cell.active{
+    background:var(--surface);
+    border:1.5px solid var(--border2);
+    cursor:pointer;
+}
+.cw-cell.active:hover{
+    border-color:rgba(255,255,255,.18);
+}
+
+/* رقم السؤال */
+.cell-num{
+    position:absolute;
+    top:1px;right:2px;
+    font-size:clamp(7px,2vw,9px);
+    color:var(--gold);
+    font-weight:700;
+    line-height:1;
+    z-index:2;
+    pointer-events:none;
+}
+[dir="ltr"] .cell-num{right:auto;left:2px}
+
+/* الحرف */
+.cell-letter{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(14px,4vw,20px);
+    font-weight:800;
+    color:var(--text);
+    z-index:1;
+    pointer-events:none;
+    transition:all .2s;
+}
+
+/* الخلية المختارة */
+.cw-cell.selected{
+    border-color:var(--gold) !important;
+    background:var(--gold-dim) !important;
+    box-shadow:0 0 12px var(--gold-glow),inset 0 0 8px rgba(212,169,48,.08);
+}
+.cw-cell.selected .cell-letter{color:var(--gold)}
+
+/* الخلية المظللة (نفس الكلمة) */
+.cw-cell.highlighted{
+    border-color:rgba(212,169,48,.3) !important;
+    background:rgba(212,169,48,.06) !important;
+}
+
+/* الخلية الصحيحة */
+.cw-cell.correct{
+    border-color:var(--emerald) !important;
+    background:var(--emerald-dim) !important;
+}
+.cw-cell.correct .cell-letter{
+    color:var(--emerald);
+}
+
+/* أنيميشن الإجابة الصحيحة */
+@keyframes cellCorrect{
+    0%{transform:scale(1)}
+    40%{transform:scale(1.12)}
+    100%{transform:scale(1)}
+}
+.cw-cell.pop{animation:cellCorrect .35s ease}
+
+/* ── لوح التلميحات ── */
+.clues-panel{
+    flex:1;min-height:0;overflow-y:auto;
+    display:flex;flex-direction:column;gap:6px;
+    padding:4px 2px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.08) transparent;
+    mask-image:linear-gradient(to bottom,#000 92%,transparent);
+    -webkit-mask-image:linear-gradient(to bottom,#000 92%,transparent);
+}
+.clues-panel::-webkit-scrollbar{width:3px}
+.clues-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+
+.clue-section{margin-bottom:2px}
+
+.clue-heading{
+    display:flex;align-items:center;gap:6px;
+    padding:5px 8px;
+    font-size:.72rem;font-weight:700;
+    color:var(--gold);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    border-bottom:1px solid rgba(212,169,48,.1);
+    margin-bottom:2px;
+}
+.clue-arrow{
+    font-size:.8rem;
+    opacity:.6;
+}
+
+.clue-list{display:flex;flex-direction:column;gap:1px}
+
+.clue-item{
+    display:flex;align-items:flex-start;gap:8px;
+    padding:6px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:all .15s;
+    font-size:.78rem;
+    line-height:1.5;
+    color:var(--text-mid);
+}
+.clue-item:active{transform:scale(.98)}
+.clue-item:hover{background:rgba(255,255,255,.03)}
+
+.clue-item.active{
+    background:var(--gold-dim);
+    color:var(--text);
+}
+
+.clue-item.solved{
+    opacity:.4;
+    text-decoration:line-through;
+    text-decoration-color:var(--emerald);
+    pointer-events:none;
+}
+.clue-item.solved .clue-num{color:var(--emerald)}
+
+.clue-num{
+    font-weight:800;
+    color:var(--gold);
+    min-width:18px;
+    font-size:.72rem;
+    flex-shrink:0;
+    padding-top:1px;
+}
+.clue-text{flex:1}
+
+/* ── لوحة المفاتيح ── */
+.keyboard-area{
+    flex-shrink:0;
+    padding:6px 0 8px;
+}
+
+.keyboard{
+    display:flex;flex-direction:column;gap:5px;
+    max-width:400px;margin:0 auto;
+}
+
+.kb-row{
+    display:flex;gap:4px;
+    justify-content:center;
+}
+
+.kb-key{
+    height:clamp(36px,9vw,42px);
+    min-width:clamp(26px,7.5vw,34px);
+    border:none;border-radius:8px;
+    background:var(--surface2);
+    color:var(--text);
+    font-family:'Cairo',sans-serif;
+    font-size:clamp(13px,3.5vw,16px);
+    font-weight:700;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .1s;
+    -webkit-user-select:none;user-select:none;
+    border:1px solid var(--border);
+    position:relative;
+    overflow:hidden;
+}
+.kb-key::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);
+    pointer-events:none;
+}
+.kb-key:active{
+    transform:scale(.92);
+    background:var(--gold-dim);
+    border-color:var(--gold);
+}
+
+.kb-key.special{
+    min-width:clamp(42px,11vw,56px);
+    font-size:clamp(11px,2.8vw,13px);
+    background:rgba(255,255,255,.04);
+    color:var(--text-dim);
+}
+.kb-key.special.enter-key{
+    background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(34,197,94,.08));
+    color:var(--emerald);
+    border-color:rgba(34,197,94,.2);
+}
+.kb-key.special.del-key{
+    background:rgba(239,68,68,.08);
+    color:rgba(239,68,68,.7);
+    border-color:rgba(239,68,68,.12);
+}
+
+.kb-key.used{
+    opacity:.3;
+}
+
+/* ══════════════════
+   شاشة النتيجة
+   ══════════════════ */
+#S2{background:var(--bg)}
+.result-card{
+    text-align:center;display:flex;flex-direction:column;
+    align-items:center;gap:16px;position:relative;
+    padding:40px;
+}
+
+.result-glow{
+    position:absolute;width:200px;height:200px;
+    border-radius:50%;filter:blur(80px);
+    top:50%;left:50%;transform:translate(-50%,-60%);
+    pointer-events:none;opacity:.3;
+    transition:background .3s;
+}
+
+.result-icon{
+    width:76px;height:76px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:2rem;font-weight:900;
+    animation:resIn .5s cubic-bezier(.34,1.56,.64,1);
+    position:relative;z-index:1;
+}
+@keyframes resIn{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+
+.result-icon.ok{
+    background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(34,197,94,.08));
+    color:var(--emerald);
+    border:2px solid rgba(34,197,94,.2);
+    box-shadow:0 0 30px var(--emerald-glow);
+}
+.result-icon.no{
+    background:rgba(239,68,68,.1);
+    color:var(--danger);
+    border:2px solid rgba(239,68,68,.15);
+}
+
+.result-title{
+    font-size:1.3rem;font-weight:800;
+    position:relative;z-index:1;
+}
+.result-title.ok{color:var(--emerald)}
+.result-title.no{color:var(--danger)}
+
+.result-coins{
+    display:flex;align-items:center;gap:8px;
+    font-size:1.1rem;font-weight:800;color:var(--gold);
+    background:var(--gold-dim);
+    padding:10px 24px;border-radius:14px;
+    border:1px solid rgba(212,169,48,.15);
+    animation:coinIn .4s .2s both;
+}
+@keyframes coinIn{0%{transform:translateY(10px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.result-coins.hidden{display:none}
+.coin-icon{font-size:1.2rem}
+
+.result-next{
+    font-size:.76rem;color:var(--text-dim);
+    animation:pulse 1.8s ease infinite;
+    margin-top:4px;
+}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.12}}
+
+/* ══════════════════
+   حالات خاصة
+   ══════════════════ */
+
+/* عند إكمال كلمة - تأثير على الخلايا */
+@keyframes wordComplete{
+    0%{box-shadow:0 0 0 0 var(--emerald-glow)}
+    50%{box-shadow:0 0 16px 4px var(--emerald-glow)}
+    100%{box-shadow:0 0 0 0 transparent}
+}
+.cw-cell.word-complete{
+    animation:wordComplete .6s ease;
+}
+
+/* خلفية مزخرفة */
+body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+        radial-gradient(ellipse 600px 400px at 20% 10%,rgba(212,169,48,.03),transparent),
+        radial-gradient(ellipse 500px 500px at 80% 90%,rgba(34,197,94,.02),transparent);
+}
+
+/* ══════════════════
+   Responsive
+   ══════════════════ */
+@media(max-width:360px){
+    :root{--cell-size:clamp(28px,7.5vw,38px)}
+    .game-layout{padding:6px 8px 0}
+    .hdr-title{font-size:.85rem}
+    .clue-item{font-size:.72rem;padding:5px 8px}
+}
+
+@media(max-height:650px){
+    .clues-panel{max-height:80px}
+    .keyboard-area{padding:4px 0 6px}
+}
+
+@media(max-height:550px){
+    :root{--cell-size:clamp(26px,6vw,34px)}
+    .clues-panel{max-height:60px}
+    .game-hdr{padding:2px 0 4px}
+    .keyboard-area{padding:2px 0 4px}
+    .kb-key{height:clamp(30px,7vw,36px)}
+}
+
+/* Landscape */
+@media(orientation:landscape) and (max-height:500px){
+    .game-layout{flex-direction:row;flex-wrap:wrap;max-width:100%;padding:4px 12px}
+    .game-hdr{width:100%;padding:2px 0 4px}
+    .play-area{flex-direction:row;gap:10px;flex:1;min-height:0}
+    .grid-container{flex:0 0 auto}
+    .clues-panel{flex:1;max-height:none}
+    .keyboard-area{width:100%;padding:2px 0 4px}
+    :root{--cell-size:clamp(24px,5.5vh,34px)}
+    .kb-key{height:clamp(28px,7vh,36px)}
+}
