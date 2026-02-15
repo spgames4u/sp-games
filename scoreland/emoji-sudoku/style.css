@@ -1,0 +1,108 @@
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+    --bg:#0b0e1a;--surface:#131832;--surface2:#1a2040;--surface3:#1e2550;
+    --gold:#d4a930;--gold-dim:rgba(212,169,48,.12);--gold-glow:rgba(212,169,48,.25);
+    --emerald:#22c55e;--emerald-dim:rgba(34,197,94,.1);
+    --danger:#ef4444;--danger-dim:rgba(239,68,68,.1);
+    --text:#f0f0f5;--text-dim:rgba(255,255,255,.35);--text-mid:rgba(255,255,255,.6);
+    --border:rgba(255,255,255,.06);
+}
+html,body{width:100%;min-height:100%;overflow-x:hidden;overflow-y:auto;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);-webkit-overflow-scrolling:touch}
+/* شريط التمرير */
+html,body,.screen{scrollbar-width:thin;scrollbar-color:rgba(212,169,48,.35) transparent}
+html::-webkit-scrollbar,body::-webkit-scrollbar,.screen::-webkit-scrollbar{width:6px;height:6px}
+html::-webkit-scrollbar-track,body::-webkit-scrollbar-track,.screen::-webkit-scrollbar-track{background:transparent}
+html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb,.screen::-webkit-scrollbar-thumb{background:rgba(212,169,48,.35);border-radius:10px}
+html::-webkit-scrollbar-thumb:hover,body::-webkit-scrollbar-thumb:hover,.screen::-webkit-scrollbar-thumb:hover{background:rgba(212,169,48,.5)}
+html::-webkit-scrollbar-thumb:active,body::-webkit-scrollbar-thumb:active,.screen::-webkit-scrollbar-thumb:active{background:var(--gold)}
+.hidden{display:none!important}
+
+/* شاشات */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;z-index:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.on{display:flex}
+
+/* S0 تحميل */
+#S0{background:var(--bg);z-index:100}
+.loader-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.emoji-loader{width:56px;height:56px;display:flex;align-items:center;justify-content:center}
+.spin-emoji{font-size:2.2rem;animation:spin 2s ease-in-out infinite}
+@keyframes spin{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1)}}
+#S0 p{font-size:.78rem;color:var(--text-dim);font-weight:700}
+
+/* S1 اللعب */
+#S1.on{justify-content:flex-start;background:var(--bg)}
+.game-layout{width:100%;max-width:420px;min-height:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;padding:6px 10px;gap:5px;padding-bottom:20px;flex-shrink:0}
+
+/* هيدر */
+.game-hdr{display:flex;align-items:center;gap:8px;padding:3px 0;flex-shrink:0;width:100%}
+.icon-btn{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-dim);flex-shrink:0}
+.icon-btn:active{transform:scale(.9)}.icon-btn.off{opacity:.3}
+.hdr-center{flex:1;min-width:0}
+.hdr-title{font-size:.82rem;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.remaining-badge{font-size:.6rem;font-weight:800;color:var(--gold);background:var(--gold-dim);padding:3px 10px;border-radius:14px;border:1.5px solid rgba(212,169,48,.12);flex-shrink:0}
+.remain-num{font-size:.7rem}
+
+/* الشبكة */
+.grid-container{display:flex;justify-content:center;padding:6px 0;flex-shrink:0}
+.grid{display:grid;background:rgba(255,255,255,.02);border-radius:10px;padding:6px;border:1.5px solid var(--border)}
+.cell{display:flex;align-items:center;justify-content:center;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);transition:all .15s;user-select:none;line-height:1}
+.cell.fixed{background:var(--surface);opacity:.95}
+.cell.blank{background:rgba(0,0,0,.3);border-style:dashed;cursor:pointer}
+.cell.blank:active{transform:scale(.93)}
+.cell.selected{border-color:var(--gold)!important;border-style:solid;box-shadow:0 0 10px var(--gold-glow);background:rgba(212,169,48,.06)}
+.cell.filled{border-style:solid;border-color:var(--gold);background:var(--gold-dim)}
+.cell.correct{border-color:var(--emerald)!important;background:var(--emerald-dim);animation:pop .3s ease}
+.cell.error{border-color:var(--danger)!important;background:var(--danger-dim);animation:shake .4s ease}
+@keyframes pop{0%{transform:scale(.85)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+
+/* تلميح */
+.hint-txt{font-size:.58rem;color:var(--text-dim);font-weight:700;text-align:center;flex-shrink:0}
+
+/* picker */
+.picker{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:6px 0;flex-shrink:0;max-width:100%}
+.pick-btn{display:flex;align-items:center;justify-content:center;border-radius:10px;border:1.5px solid var(--border);background:var(--surface3);cursor:pointer;transition:all .15s;user-select:none;line-height:1}
+.pick-btn:active{transform:scale(.9)}
+.pick-btn.active{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 8px var(--gold-glow)}
+.pick-delete{color:var(--danger);font-weight:800;font-family:'Cairo',sans-serif}
+
+/* أزرار */
+.action-row{display:flex;gap:10px;justify-content:center;padding:4px 0;flex-shrink:0}
+.action-btn{padding:8px 22px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Cairo',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
+.action-btn:active{transform:scale(.95)}
+.action-btn.primary{border-color:rgba(34,197,94,.18);background:rgba(34,197,94,.06);color:var(--emerald)}
+.action-btn.secondary{border-color:rgba(255,255,255,.06);color:var(--text-dim)}
+
+/* Toast */
+.toast-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;pointer-events:none}
+.toast{background:rgba(19,24,50,.95);border:1.5px solid var(--border);border-radius:11px;padding:9px 16px;font-size:.76rem;font-weight:700;animation:tIn .25s ease;white-space:nowrap;backdrop-filter:blur(8px)}
+.toast.success{border-color:rgba(34,197,94,.2);color:var(--emerald)}
+.toast.error{border-color:rgba(239,68,68,.15);color:var(--danger)}
+.toast.info{border-color:rgba(212,169,48,.15);color:var(--gold)}
+@keyframes tIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* النتيجة S2 */
+#S2{background:var(--bg)}
+.result-card{text-align:center;display:flex;flex-direction:column;align-items:center;gap:11px;position:relative;padding:28px}
+.result-glow{position:absolute;width:180px;height:180px;border-radius:50%;filter:blur(70px);top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none;opacity:.2}
+.result-icon{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.9rem;animation:rPop .5s cubic-bezier(.34,1.56,.64,1);position:relative;z-index:1}
+@keyframes rPop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.result-icon.ok{background:rgba(34,197,94,.12);border:2px solid rgba(34,197,94,.2);box-shadow:0 0 28px rgba(34,197,94,.25)}
+.result-icon.no{background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.15)}
+.result-title{font-size:1.25rem;font-weight:900;z-index:1}
+.result-title.ok{color:var(--emerald)}.result-title.no{color:var(--danger)}
+.result-coins{display:flex;align-items:center;gap:7px;font-size:1rem;font-weight:800;color:var(--gold);background:var(--gold-dim);padding:8px 20px;border-radius:12px;border:1px solid rgba(212,169,48,.12)}
+.result-coins.hidden{display:none}
+.result-next{font-size:.7rem;color:var(--text-dim);animation:pulse 1.8s ease infinite;margin-top:3px}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.1}}
+
+/* confetti */
+.confetti-cv{position:fixed;inset:0;z-index:150;pointer-events:none;display:none}
+
+/* خلفية */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 400px 300px at 20% 10%,rgba(212,169,48,.012),transparent),radial-gradient(ellipse 350px 350px at 80% 85%,rgba(34,197,94,.008),transparent)}
+
+/* Responsive */
+@media(max-width:360px){.game-layout{padding:4px 6px;gap:3px}.grid{padding:4px}}
+@media(max-height:620px){.game-layout{gap:2px}.grid-container{padding:3px 0}.picker{padding:3px 0}.action-row{padding:2px 0}}
+@media(max-height:550px){.hint-txt{display:none}.game-hdr{padding:1px 0}.grid{padding:3px}}
