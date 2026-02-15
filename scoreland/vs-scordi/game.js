@@ -21,9 +21,9 @@ var T={
 };
 
 var AR_LETTERS='ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
-var COMMON_LETTERS='االنمروهيلكبتسعف';
+var COMMON_LETTERS='ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
 var EN_LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-var EN_COMMON_LETTERS='ETAOINSRHLCDUPMFGYBWVKXJQZ';
+var EN_COMMON_LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 var $=function(id){return document.getElementById(id)};
 var S0=$('S0'),S1=$('S1'),S2=$('S2');
@@ -124,7 +124,7 @@ function post(d){if(window.parent!==window)window.parent.postMessage(d,'*')}
 function normChar(ch){
     if(!ch)return'';
     if(lang==='en')return String(ch).toUpperCase();
-    return ch.replace(/[إأآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
+    return ch.replace(/[إأآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و').replace(/ء/g,'ا');
 }
 function getLetterPool(){return lang==='en'?EN_LETTERS:AR_LETTERS}
 function getCommonLetters(){return lang==='en'?EN_COMMON_LETTERS:COMMON_LETTERS}
