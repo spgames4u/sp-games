@@ -1,0 +1,479 @@
+/* ══════════════════════════════════════
+   Earth Land 🌍 - ScoreLand Geography Game
+   Premium Dark Theme
+   ══════════════════════════════════════ */
+
+:root {
+    --bg-deep: #080b14;
+    --bg-card: #0d1120;
+    --bg-panel: rgba(13, 17, 32, 0.92);
+    --gold: #c9a227;
+    --gold-light: #e8c84a;
+    --gold-dim: rgba(201, 162, 39, 0.15);
+    --green: #2ecc71;
+    --green-dim: rgba(46, 204, 113, 0.15);
+    --red: #e74c3c;
+    --red-dim: rgba(231, 76, 60, 0.15);
+    --orange: #f39c12;
+    --blue: #3498db;
+    --text: rgba(255, 255, 255, 0.9);
+    --text-dim: rgba(255, 255, 255, 0.45);
+    --border: rgba(255, 255, 255, 0.06);
+    --radius: 12px;
+    --font: 'Cairo', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+    font-family: var(--font);
+    background: var(--bg-deep);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ══════ Screens ══════ */
+.screen {
+    position: fixed; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+.screen.on { display: flex; }
+
+/* ══════ S0: Loading ══════ */
+#S0 { background: var(--bg-deep); z-index: 100; }
+.loader-wrap { text-align: center; }
+.globe-loader {
+    font-size: 3.5rem;
+    animation: globeSpin 2s linear infinite;
+    filter: drop-shadow(0 0 20px rgba(52, 152, 219, 0.4));
+}
+@keyframes globeSpin {
+    0% { transform: rotateY(0deg) scale(1); }
+    50% { transform: rotateY(180deg) scale(1.1); }
+    100% { transform: rotateY(360deg) scale(1); }
+}
+#loadTxt {
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* ══════ S1: Game Layout ══════ */
+.game-layout {
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-deep);
+}
+
+/* ── Header ── */
+.game-hdr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+}
+.icon-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn.off { opacity: 0.3; }
+
+.hdr-center { flex: 1; text-align: center; min-width: 0; }
+.hdr-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.attempts-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(52, 152, 219, 0.12);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--blue);
+    flex-shrink: 0;
+}
+
+/* ── Country Banner ── */
+.country-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.08), rgba(201, 162, 39, 0.03));
+    border-bottom: 1px solid var(--gold-dim);
+    flex-shrink: 0;
+    z-index: 10;
+}
+.country-flag { font-size: 1.5rem; }
+.country-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--gold-light);
+    text-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+}
+
+/* ══════ Map ══════ */
+.map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+}
+#map {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-deep);
+    cursor: crosshair !important;
+}
+
+/* Leaflet overrides */
+.leaflet-container { background: #f2efe9 !important; }
+.leaflet-control-zoom { border: none !important; }
+.leaflet-control-zoom a {
+    background: rgba(13, 17, 32, 0.85) !important;
+    color: var(--text) !important;
+    border: 1px solid rgba(0,0,0,0.15) !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+    margin-bottom: 4px !important;
+    backdrop-filter: blur(8px) !important;
+}
+.leaflet-control-zoom a:hover {
+    background: rgba(201, 162, 39, 0.9) !important;
+    color: #fff !important;
+}
+.leaflet-control-attribution { display: none !important; }
+
+/* ── Hint Panel ── */
+.hint-panel {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(13, 17, 32, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    animation: hintIn 0.3s ease;
+    white-space: nowrap;
+}
+.hint-panel.hidden { display: none; }
+@keyframes hintIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.hint-distance {
+    font-size: 1.05rem;
+    font-weight: 800;
+    min-width: 80px;
+    text-align: center;
+}
+.hint-distance.hot { color: var(--green); }
+.hint-distance.warm { color: var(--orange); }
+.hint-distance.cold { color: var(--red); }
+
+.hint-direction {
+    width: 28px; height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dir-arrow {
+    width: 22px; height: 22px;
+    transition: transform 0.4s ease;
+    color: var(--gold);
+    filter: drop-shadow(0 0 4px rgba(201, 162, 39, 0.4));
+}
+
+.hint-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* ── Click Instruction ── */
+.click-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: rgba(13, 17, 32, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(201,162,39,0.2);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gold);
+    animation: clickPulse 2s ease infinite;
+    pointer-events: none;
+}
+.click-hint.hidden { display: none; }
+@keyframes clickPulse {
+    0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+    50% { opacity: 0.7; transform: translateX(-50%) scale(0.97); }
+}
+
+/* ── Guess Markers ── */
+.guess-marker {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #fff;
+    border: 2.5px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    transition: all 0.3s;
+    font-family: var(--font);
+}
+.guess-marker.cold-m { background: var(--red); }
+.guess-marker.warm-m { background: var(--orange); }
+.guess-marker.hot-m { background: var(--green); }
+
+.correct-marker {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    background: radial-gradient(circle, rgba(46, 204, 113, 0.3), transparent);
+    border: 3px solid var(--green);
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.5), 0 0 40px rgba(46, 204, 113, 0.2);
+    animation: correctPulse 1.5s ease infinite;
+}
+@keyframes correctPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.5), 0 0 40px rgba(46, 204, 113, 0.2); transform: scale(1); }
+    50% { box-shadow: 0 0 30px rgba(46, 204, 113, 0.7), 0 0 60px rgba(46, 204, 113, 0.3); transform: scale(1.1); }
+}
+
+.target-marker {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: radial-gradient(circle, rgba(231, 76, 60, 0.3), transparent);
+    border: 3px solid var(--red);
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+    animation: correctPulse 1.5s ease infinite;
+}
+
+/* ── Guesses History Bar ── */
+.guesses-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+    flex-shrink: 0;
+    min-height: 40px;
+    z-index: 10;
+}
+.guesses-bar:empty { min-height: 0; padding: 0; }
+.guess-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border: 1px solid;
+    animation: chipIn 0.3s ease;
+}
+@keyframes chipIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+.guess-chip.cold-c { background: var(--red-dim); border-color: rgba(231, 76, 60, 0.2); color: var(--red); }
+.guess-chip.warm-c { background: rgba(243, 156, 18, 0.1); border-color: rgba(243, 156, 18, 0.2); color: var(--orange); }
+.guess-chip.hot-c { background: var(--green-dim); border-color: rgba(46, 204, 113, 0.2); color: var(--green); }
+
+/* ══════ S2: Result ══════ */
+#S2 { background: var(--bg-deep); }
+.result-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 30px;
+    position: relative;
+}
+.result-glow {
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.15;
+    top: 0;
+}
+.result-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    animation: resIn 0.5s ease;
+    position: relative;
+}
+@keyframes resIn {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    70% { transform: scale(1.15) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.result-icon.ok { background: var(--green-dim); border: 2px solid rgba(46, 204, 113, 0.3); }
+.result-icon.fail { background: var(--red-dim); border: 2px solid rgba(231, 76, 60, 0.3); }
+
+.result-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1.4;
+}
+.result-title.ok { color: var(--green); }
+.result-title.fail { color: var(--red); }
+
+.result-info {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.result-coins {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gold);
+    background: var(--gold-dim);
+    padding: 8px 22px;
+    border-radius: 10px;
+    border: 1px solid rgba(201, 162, 39, 0.15);
+}
+.result-coins.hidden { display: none; }
+
+.result-next {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    opacity: 0.4;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.15; }
+}
+
+/* ══════ Found Animation Overlay ══════ */
+.found-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 11, 20, 0.6);
+    animation: overlayIn 0.3s ease;
+    pointer-events: none;
+}
+@keyframes overlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.found-text {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--green);
+    text-shadow: 0 0 30px rgba(46, 204, 113, 0.5);
+    animation: foundBounce 0.6s ease;
+}
+@keyframes foundBounce {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* ══════ Responsive ══════ */
+@media (min-width: 600px) {
+    .game-hdr { padding: 10px 20px; }
+    .hdr-title { font-size: 1rem; }
+    .country-name { font-size: 1.3rem; }
+    .hint-panel { padding: 10px 24px; gap: 14px; }
+    .hint-distance { font-size: 1.15rem; }
+}
+@media (max-width: 380px) {
+    .hdr-title { font-size: 0.78rem; }
+    .country-name { font-size: 1rem; }
+    .country-banner { padding: 8px 10px; gap: 8px; }
+    .hint-panel { padding: 6px 12px; gap: 8px; }
+    .hint-distance { font-size: 0.9rem; min-width: 60px; }
+}
+
+/* ══════ Leaflet Popup Override ══════ */
+.leaflet-popup-content-wrapper {
+    background: rgba(13, 17, 32, 0.92) !important;
+    color: var(--text) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    backdrop-filter: blur(12px) !important;
+    font-family: var(--font) !important;
+}
+.leaflet-popup-tip { background: rgba(13, 17, 32, 0.92) !important; }
+.leaflet-popup-content { font-size: 0.8rem !important; font-weight: 600 !important; }
