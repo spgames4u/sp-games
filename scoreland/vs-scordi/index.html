@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ضد سكوردي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="S0" class="screen on">
+        <div class="loader-wrap">
+            <div class="scordi-face">
+                <div class="scordi-eyes"><span class="eye"></span><span class="eye"></span></div>
+                <div class="scordi-mouth"></div>
+            </div>
+            <p id="loadTxt">جاري التحضير للمواجهة...</p>
+        </div>
+    </div>
+
+    <div id="S1" class="screen">
+        <div class="game-layout">
+            <header class="game-hdr">
+                <button id="sndBtn" class="icon-btn" data-title="soundTitle">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </button>
+                <div class="hdr-center">
+                    <h2 id="qTitle" class="hdr-title">...</h2>
+                    <span id="turnBadge" class="turn-badge">دورك</span>
+                </div>
+            </header>
+
+            <div class="zone zone-scordi" id="zoneScordi">
+                <div class="zone-hdr">
+                    <span class="zone-name" id="scordiName">سكوردي</span>
+                    <span class="zone-score" id="scordiScore">0/3</span>
+                    <span class="zone-status" id="scordiStatus"></span>
+                </div>
+                <div class="word-cards" id="scordiWords"></div>
+                <div class="letter-slots" id="scordiSlots"></div>
+            </div>
+
+            <div class="powers-row">
+                <div class="player-powers" id="playerPowerCards"></div>
+                <button class="field-btn" id="fieldBtn" data-title="fieldTitle">
+                    <span class="field-icon" id="fieldIcon">📥</span>
+                    <span class="field-count" id="fieldCount">∞</span>
+                </button>
+                <div class="scordi-powers" id="scordiPowerCards"></div>
+            </div>
+
+            <div class="zone zone-player" id="zonePlayer">
+                <div class="zone-hdr">
+                    <span class="zone-name" id="playerName">أنت</span>
+                    <span class="zone-score" id="playerScore">0/3</span>
+                </div>
+                <div class="word-cards" id="playerWords"></div>
+                <div class="letter-slots" id="playerSlots"></div>
+            </div>
+
+            <p class="hint" id="hintTxt">اختر كلمة ثم اضغط على 3 حروف لتكوينها</p>
+            <button class="cancel-seize-btn hidden" id="cancelSeizeBtn">إلغاء</button>
+            <p class="icons-legend" id="iconsLegend">👁️‍🗨️استيلاء 💥إسقاط 🌀سحب3 📥الميدان</p>
+        </div>
+    </div>
+
+    <div id="S2" class="screen">
+        <div class="result-card">
+            <div class="result-glow"></div>
+            <canvas id="confettiCanvas"></canvas>
+            <div id="resIcon" class="result-icon"></div>
+            <h2 id="resTitle" class="result-title"></h2>
+            <div id="resCoins" class="result-coins hidden"><span>🌟</span><span id="resAmt"></span></div>
+            <p id="resNext" class="result-next">جاري الانتقال...</p>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script src="game.js"></script>
+</body>
+</html>
