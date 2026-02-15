@@ -4,8 +4,8 @@
 var lang='ar', sndOn=true, ac=null, lastSnd=0;
 var originalAnswer='', turn='player', wait=true;
 var myWords=[], scordiWords=[], myLetters=[], scordiLetters=[], field=[];
-var scordiDone=0;
 var myCompletedWords=[];
+var scordiCompletedWords=[];
 var selWordIdx=-1, pickedLetters=[];
 var playerDrewThisTurn=false;
 var playerPowerCards={seize:0,drop:0,draw3:0};
@@ -143,7 +143,7 @@ function loadQ(d){
     var picked=allWords.slice(0,totalNeeded);
     myWords=picked.slice(0,wordsPerPlayer);
     scordiWords=picked.slice(wordsPerPlayer,totalNeeded);
-    scordiDone=0;
+    scordiCompletedWords=[];
     myCompletedWords=[];
     selWordIdx=-1;pickedLetters=[];
     turn='player';
@@ -183,23 +183,23 @@ function shuffleArray(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.ran
 
 function renderAll(){
     renderWords(playerWordsEl,myWords,myCompletedWords,true);
-    renderWords(scordiWordsEl,scordiWords,scordiDone,false);
+    renderWords(scordiWordsEl,scordiWords,scordiCompletedWords,false);
     var slotChars=[];
     for(var i=0;i<pickedLetters.length;i++){slotChars.push(myLetters[pickedLetters[i]])}
     renderSlots(playerSlotsEl,myWords,myCompletedWords,selWordIdx,slotChars,true);
-    renderSlots(scordiSlotsEl,scordiWords,scordiDone,-1,[],false);
+    renderSlots(scordiSlotsEl,scordiWords,scordiCompletedWords,-1,[],false);
     renderPlayerLetters();
     renderScordiLetters();
     renderPowerCards();
     renderScordiPowerCards();
     fieldCount.textContent='\u221E';
-    scordiScore.textContent=scordiDone+'/'+wordsPerPlayer;
+    scordiScore.textContent=scordiCompletedWords.length+'/'+wordsPerPlayer;
     playerScore.textContent=myCompletedWords.length+'/'+wordsPerPlayer;
 }
 
 function renderWords(container,words,doneData,isPlayer){
     container.innerHTML='';
-    var isDone=function(i){return isPlayer?(myCompletedWords.indexOf(i)>=0):(i<doneData)};
+    var isDone=function(i){return (isPlayer?myCompletedWords:doneData).indexOf(i)>=0};
     for(var i=0;i<words.length;i++){
         var w=document.createElement('div');
         w.className='word-card'+(isDone(i)?' done':'')+(isPlayer&&selWordIdx===i?' selected':'');
@@ -217,7 +217,7 @@ function renderSlots(container,words,doneData,selIdx,letters,isPlayer){
     var idx=selIdx>=0?selIdx:0;
     if(isPlayer){
         while(idx<words.length&&myCompletedWords.indexOf(idx)>=0)idx++;
-    }else{if(idx<doneData)idx=doneData}
+    }else{while(idx<words.length&&doneData.indexOf(idx)>=0)idx++}
     var word=words[idx]||'';
     for(var i=0;i<3;i++){
         var s=document.createElement('div');
@@ -350,7 +350,7 @@ function onDropLetter(idx){
 var scordiLetterAssign={};
 function scordiLetterUsed(i){
     for(var w=0;w<scordiWords.length;w++){
-        if(w>=scordiDone)continue;
+        if(scordiCompletedWords.indexOf(w)>=0)continue;
         for(var c=0;c<3;c++){
             if(scordiLetterAssign[w+','+c]===i)return true;
         }
@@ -540,10 +540,10 @@ function scordiTurn(){
         var w=scordiWords[completed];
         scordiAnimateWord(completed,w,function(){
             toastShow(' '+t('scordiComplete')+' '+w,'info');
-            scordiDone++;
-            scordiScore.textContent=scordiDone+'/'+wordsPerPlayer;
+            scordiCompletedWords.push(completed);
+            scordiScore.textContent=scordiCompletedWords.length+'/'+wordsPerPlayer;
             renderAll();
-            if(scordiDone>=wordsPerPlayer){wait=true;setTimeout(function(){post({type:'answer',answer:'خسارة'})},700);return}
+            if(scordiCompletedWords.length>=wordsPerPlayer){wait=true;setTimeout(function(){post({type:'answer',answer:'خسارة'})},700);return}
             endScordiTurn();
         });
         return;
@@ -568,7 +568,8 @@ function scordiTurn(){
 }
 
 function tryScordiComplete(){
-    for(var wi=scordiDone;wi<scordiWords.length;wi++){
+    for(var wi=0;wi<scordiWords.length;wi++){
+        if(scordiCompletedWords.indexOf(wi)>=0)continue;
         var word=scordiWords[wi];
         var need=[normChar(word[0]),normChar(word[1]),normChar(word[2])];
         var has={};
@@ -598,7 +599,7 @@ function tryScordiComplete(){
 }
 
 function scordiAnimateWord(wi,word,cb){
-    renderSlots(scordiSlotsEl,scordiWords,scordiDone,wi,[],false);
+    renderSlots(scordiSlotsEl,scordiWords,scordiCompletedWords,wi,[],false);
     var slots=scordiSlotsEl.querySelectorAll('.letter-slot');
     function fillNext(i){
         if(i>=3){if(cb)cb();return}
@@ -610,7 +611,8 @@ function scordiAnimateWord(wi,word,cb){
 
 function scordiWouldBenefitFromSeize(){
     if(myLetters.length===0)return false;
-    for(var wi=scordiDone;wi<scordiWords.length;wi++){
+    for(var wi=0;wi<scordiWords.length;wi++){
+        if(scordiCompletedWords.indexOf(wi)>=0)continue;
         var word=scordiWords[wi];
         var need=[normChar(word[0]),normChar(word[1]),normChar(word[2])];
         var hasCount={};
@@ -758,7 +760,8 @@ function scordiPickBestLetterFromPlayer(){
         }
     };
     var completeScordi=[];
-    for(var wi=scordiDone;wi<scordiWords.length;wi++){
+    for(var wi=0;wi<scordiWords.length;wi++){
+        if(scordiCompletedWords.indexOf(wi)>=0)continue;
         var word=scordiWords[wi];
         var need=[normChar(word[0]),normChar(word[1]),normChar(word[2])];
         var hasCount={};
@@ -798,7 +801,8 @@ function scordiPickBestLetterFromPlayer(){
     }
     if(blockPlayer.length>0)return pick(blockPlayer);
     var closer=[];
-    for(var wi=scordiDone;wi<scordiWords.length;wi++){
+    for(var wi=0;wi<scordiWords.length;wi++){
+        if(scordiCompletedWords.indexOf(wi)>=0)continue;
         var word=scordiWords[wi];
         var need=[normChar(word[0]),normChar(word[1]),normChar(word[2])];
         var hasCount={};
