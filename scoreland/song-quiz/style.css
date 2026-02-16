@@ -42,10 +42,29 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Cairo', 
 .loader-wrap p { font-size: .85rem; color: var(--text-mid); font-weight: 600; }
 
 /* ══════ Game Layout ══════ */
+/* ══════ شريط التمرير الأنيق ══════ */
 .game-layout {
     width: 100%; max-width: 480px; height: 100%; margin: 0 auto;
     display: flex; flex-direction: column; padding: 6px 10px; gap: 6px; overflow-y: auto; overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139,92,246,.35) transparent;
+}
+.game-layout::-webkit-scrollbar {
+    width: 6px;
+}
+.game-layout::-webkit-scrollbar-track {
+    background: transparent;
+}
+.game-layout::-webkit-scrollbar-thumb {
+    background: rgba(139,92,246,.35);
+    border-radius: 10px;
+}
+.game-layout::-webkit-scrollbar-thumb:hover {
+    background: rgba(139,92,246,.5);
+}
+.game-layout::-webkit-scrollbar-thumb:active {
+    background: rgba(139,92,246,.6);
 }
 
 .game-hdr { flex-shrink: 0; text-align: center; padding: 4px 0; }
