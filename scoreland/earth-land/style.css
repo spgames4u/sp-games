@@ -309,6 +309,7 @@ body {
 }
 
 /* ── Guesses History Bar ── */
+/* ── Guesses History Bar + شريط تمرير أفقي أنيق ── */
 .guesses-bar {
     display: flex;
     align-items: center;
@@ -320,6 +321,25 @@ body {
     flex-shrink: 0;
     min-height: 40px;
     z-index: 10;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 162, 39, 0.4) transparent;
+    -webkit-overflow-scrolling: touch;
+}
+.guesses-bar::-webkit-scrollbar {
+    height: 6px;
+}
+.guesses-bar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.guesses-bar::-webkit-scrollbar-thumb {
+    background: rgba(201, 162, 39, 0.4);
+    border-radius: 10px;
+}
+.guesses-bar::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 162, 39, 0.55);
+}
+.guesses-bar::-webkit-scrollbar-thumb:active {
+    background: rgba(201, 162, 39, 0.65);
 }
 .guesses-bar:empty { min-height: 0; padding: 0; }
 .guess-chip {
