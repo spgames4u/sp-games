@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الإيموجي المختلف</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- S0: تحميل -->
+    <div id="S0" class="screen on">
+        <div class="loader-wrap">
+            <div class="eye-loader">
+                <div class="eye-outer"><div class="eye-inner"></div></div>
+            </div>
+            <p id="loadTxt">جاري التحميل...</p>
+        </div>
+    </div>
+
+    <!-- S1: اللعب -->
+    <div id="S1" class="screen">
+        <div class="game-layout">
+            <header class="game-hdr">
+                <div class="lives" id="lives"></div>
+                <div class="hdr-center">
+                    <h2 id="qTitle" class="hdr-title">...</h2>
+                </div>
+                <span id="ctr" class="hdr-ctr">0/0</span>
+            </header>
+
+            <div class="grid-area">
+                <div class="grid-container" id="gridContainer"></div>
+            </div>
+
+            <div class="game-footer">
+                <p class="hint-text" id="hintText">🔍 اضغط على الإيموجي المختلف</p>
+                <button id="sndBtn" class="snd-btn" title="الصوت">
+                    <svg class="icon-vol" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <svg class="icon-mute hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- S2: النتيجة -->
+    <div id="S2" class="screen">
+        <div class="result-card">
+            <div class="result-glow"></div>
+            <div id="resIcon" class="result-icon"></div>
+            <h2 id="resTitle" class="result-title"></h2>
+            <div id="resCoins" class="result-coins hidden">
+                <span>🌟</span><span id="resAmt"></span>
+            </div>
+            <p id="resNext" class="result-next">السؤال التالي...</p>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toastBox" class="toast-box"></div>
+
+    <script src="game.js"></script>
+</body>
+</html>
