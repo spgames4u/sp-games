@@ -24,8 +24,8 @@ var cells = [];       /* DOM elements */
 var cellData = [];    /* {isDiff, diffType, found} */
 var positions = [];   /* maps cellIndex → positionIndex */
 
-var GAP = 4;
-var MAX_CELL = 56;
+var GAP = 5;
+var MAX_CELL = 72;
 
 var $ = function(id) { return document.getElementById(id) };
 var S0 = $('S0'), S1 = $('S1'), S2 = $('S2');
@@ -227,6 +227,12 @@ function buildGrid() {
     }
 
     positionCells();
+    /* إعادة حساب بعد رسم الـ layout */
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            positionCells();
+        });
+    });
 }
 
 /* ══════ تحديد مواقع الخلايا ══════ */
@@ -234,8 +240,12 @@ function positionCells() {
     var areaEl = document.querySelector('.grid-area');
     if (!areaEl) return;
 
-    var availW = Math.min(areaEl.clientWidth - 20, 400);
-    var availH = areaEl.clientHeight - 20;
+    var availW = areaEl.clientWidth - 16;
+    var availH = areaEl.clientHeight - 16;
+
+    /* على سطح المكتب: لا نحد العرض كثير */
+    var maxW = window.innerWidth > 500 ? 420 : 380;
+    if (availW > maxW) availW = maxW;
 
     /* حساب حجم الخلية */
     var cellFromW = Math.floor((availW - (gridSize - 1) * GAP) / gridSize);
@@ -387,7 +397,7 @@ function updateHint() {
 
 /* ══════ Resize ══════ */
 function onResize() {
-    if (wait || !cells.length) return;
+    if (!cells.length) return;
     positionCells();
 }
 
