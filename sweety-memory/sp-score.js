@@ -18,13 +18,12 @@
     }
     window[guardKey] = true;
 
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const apiBase = isLocal ? 'http://localhost:4000' :
+        (location.hostname === 'games.sp.games' || location.hostname === 'sp-games.pages.dev' ? 'https://new.sp.games' : location.origin);
     const CONFIG = {
-        apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://localhost:4000/api/games/save-score'
-            : 'https://new.sp.games/api/games/save-score',
-        nonceUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://localhost:4000/api/games/nonce'
-            : 'https://new.sp.games/api/games/nonce',
+        apiUrl: apiBase + '/api/games/save-score',
+        nonceUrl: apiBase + '/api/games/nonce',
         gameSlug: gameSlugFallback,
         minScore: 1,
         cooldownMs: 30000,
