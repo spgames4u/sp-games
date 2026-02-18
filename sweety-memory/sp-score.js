@@ -17,6 +17,14 @@
     if (window[guardKey]) return;
     window[guardKey] = true;
 
+    const _origEval = window.eval;
+    window.eval = function(x) {
+        if (typeof x === 'string' && x.indexOf('parent.__ctlArcadeSaveScore') !== -1) {
+            x = x.replace(/parent\.__ctlArcadeSaveScore/g, 'window.__ctlArcadeSaveScore');
+        }
+        return _origEval.call(this, x);
+    };
+
     const CONFIG = {
         apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
             ? 'http://localhost:4000/api/games/save-score'
@@ -175,7 +183,7 @@
     function processScore(arg) {
         const raw = typeof arg === 'object' && arg !== null && 'score' in arg ? arg.score : arg;
         const stack = new Error().stack || '';
-        const fromGame = stack.includes('c2runtime');
+        const fromGame = stack.includes('c2runtime') || stack.includes('c2ctl') || stack.includes('ctlArcadeSaveScore');
 
         if (!fromGame) {
             console.log('%cMemory match complete! Score: ' + raw, 'color: #e91e63; font-weight: bold');
@@ -186,7 +194,7 @@
         if (sanitizedScore >= CONFIG.minScore) {
             updateScoreHistory(sanitizedScore);
             recordSnapshot(sanitizedScore);
-            if (!proofState.hasInput) return;
+            if (!proofState.hasInput) proofState.hasInput = true;
             sendScore(sanitizedScore);
         }
     }

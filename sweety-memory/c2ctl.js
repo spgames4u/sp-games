@@ -1,5 +1,7 @@
  function ctlArcadeSaveScore(iScore){
-        if(parent.__ctlArcadeSaveScore){
+        if(typeof window.__ctlArcadeSaveScore === 'function'){
+            window.__ctlArcadeSaveScore({score:iScore});
+        } else if(parent.__ctlArcadeSaveScore){
             parent.__ctlArcadeSaveScore({score:iScore});
         }
     }
