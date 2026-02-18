@@ -6,25 +6,25 @@
 (function() {
     'use strict';
 
-    const gameSlugFallback = (() => {
+    const params = new URLSearchParams(location.search);
+    function getGameSlug() {
+        if (params.get('gameSlug')) return params.get('gameSlug');
         const parts = location.pathname.split('/').filter(Boolean);
-        return new URLSearchParams(location.search).get('gameSlug') || parts[parts.length - 1] || 'sweety-memory';
-    })();
-
-    const guardKey = '__SP_SCORE_RUNNING_' + gameSlugFallback;
-    if (window[guardKey]) {
-        console.warn('[SP-Score] Already running, skipping duplicate instance');
-        return;
+        return parts[parts.length - 1] || 'sweety-memory';
     }
+
+    const guardKey = '__SP_SCORE_RUNNING_' + getGameSlug();
+    if (window[guardKey]) return;
     window[guardKey] = true;
 
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    const apiBase = isLocal ? 'http://localhost:4000' :
-        (location.hostname === 'games.sp.games' || location.hostname === 'sp-games.pages.dev' ? 'https://new.sp.games' : location.origin);
     const CONFIG = {
-        apiUrl: apiBase + '/api/games/save-score',
-        nonceUrl: apiBase + '/api/games/nonce',
-        gameSlug: gameSlugFallback,
+        apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? 'http://localhost:4000/api/games/save-score'
+            : 'https://new.sp.games/api/games/save-score',
+        nonceUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? 'http://localhost:4000/api/games/nonce'
+            : 'https://new.sp.games/api/games/nonce',
+        gameSlug: getGameSlug(),
         minScore: 1,
         cooldownMs: 30000,
         debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
@@ -49,10 +49,7 @@
         historySpanMs: 0
     };
 
-    const SNAP_CONFIG = {
-        maxSnapshots: 10,
-        minInterval: 1000,
-    };
+    const SNAP_CONFIG = { maxSnapshots: 10, minInterval: 1000 };
     let snapshots = [];
     let lastSnapTime = 0;
 
@@ -71,15 +68,9 @@
     function initHoneypot() {
         const now = Date.now();
         honeypotKeys.forEach(key => {
-            const value = {
-                v: 1,
-                t: now,
-                n: Math.random().toString(36).substring(2, 15)
-            };
+            const value = { v: 1, t: now, n: Math.random().toString(36).substring(2, 15) };
             originalHoneypot[key] = JSON.stringify(value);
-            try {
-                localStorage.setItem(key, originalHoneypot[key]);
-            } catch (e) {}
+            try { localStorage.setItem(key, originalHoneypot[key]); } catch (e) {}
         });
     }
 
@@ -94,12 +85,8 @@
                         const parsed = JSON.parse(stored);
                         if (!parsed || typeof parsed.v !== 'number' || parsed.v !== 1 ||
                             typeof parsed.t !== 'number' || typeof parsed.n !== 'string' ||
-                            stored !== originalHoneypot[key]) {
-                            touched = true;
-                        }
-                    } catch (e) {
-                        touched = true;
-                    }
+                            stored !== originalHoneypot[key]) touched = true;
+                    } catch (e) { touched = true; }
                 }
             } catch (e) {}
         });
@@ -108,14 +95,8 @@
 
     function resetProof() {
         proofState = {
-            visibleStart: null,
-            visibleMs: 0,
-            focusStart: null,
-            focusMs: 0,
-            hasInput: proofState.hasInput,
-            history: [],
-            historyLength: 0,
-            historySpanMs: 0
+            visibleStart: null, visibleMs: 0, focusStart: null, focusMs: 0,
+            hasInput: proofState.hasInput, history: [], historyLength: 0, historySpanMs: 0
         };
     }
 
@@ -126,73 +107,46 @@
                     proofState.visibleMs += Date.now() - proofState.visibleStart;
                     proofState.visibleStart = null;
                 }
-            } else {
-                proofState.visibleStart = Date.now();
-            }
+            } else proofState.visibleStart = Date.now();
         });
-
-        window.addEventListener('focus', () => {
-            proofState.focusStart = Date.now();
-        });
+        window.addEventListener('focus', () => { proofState.focusStart = Date.now(); });
         window.addEventListener('blur', () => {
             if (proofState.focusStart) {
                 proofState.focusMs += Date.now() - proofState.focusStart;
                 proofState.focusStart = null;
             }
         });
-
-        const inputEvents = ['pointerdown', 'keydown', 'touchstart', 'mousedown'];
-        inputEvents.forEach(event => {
-            document.addEventListener(event, () => {
-                if (!proofState.hasInput) proofState.hasInput = true;
-            }, { once: false, passive: true, capture: true });
+        ['pointerdown', 'keydown', 'touchstart', 'mousedown'].forEach(event => {
+            document.addEventListener(event, () => { if (!proofState.hasInput) proofState.hasInput = true; }, { once: false, passive: true, capture: true });
         });
-
         if (window.parent !== window) {
-            const allowedOrigins = [
-                'http://localhost:4000',
-                'http://127.0.0.1:4000',
-                'https://sp.games',
-                'https://new.sp.games'
-            ];
+            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games'];
             window.addEventListener('message', (e) => {
                 let originAllowed = false;
                 try {
-                    const eOrigin = e.origin.toLowerCase();
+                    const eOrigin = (e.origin || '').toLowerCase();
                     for (const allowed of allowedOrigins) {
-                        const allowedLower = allowed.toLowerCase();
-                        if (eOrigin === allowedLower ||
-                            (allowedLower.includes('localhost') && eOrigin.startsWith('http://localhost')) ||
-                            (allowedLower.includes('127.0.0.1') && eOrigin.startsWith('http://127.0.0.1'))) {
+                        const al = allowed.toLowerCase();
+                        if (eOrigin === al || (al.includes('localhost') && eOrigin.startsWith('http://localhost')) || (al.includes('127.0.0.1') && eOrigin.startsWith('http://127.0.0.1'))) {
                             originAllowed = true;
                             break;
                         }
                     }
-                } catch (err) {
-                    return;
-                }
+                } catch (err) { return; }
                 if (!originAllowed) return;
-                if (e.data && typeof e.data === 'object' &&
-                    (e.data.type === 'SP_INPUT' || e.data.type === 'user_interaction' || e.data.hasInput === true)) {
+                if (e.data && typeof e.data === 'object' && (e.data.type === 'SP_INPUT' || e.data.type === 'user_interaction' || e.data.hasInput === true)) {
                     if (!proofState.hasInput) proofState.hasInput = true;
                 }
             });
         }
-
-        if (!document.hidden) {
-            proofState.visibleStart = Date.now();
-        }
-        if (document.hasFocus && document.hasFocus()) {
-            proofState.focusStart = Date.now();
-        }
+        if (!document.hidden) proofState.visibleStart = Date.now();
+        if (document.hasFocus && document.hasFocus()) proofState.focusStart = Date.now();
     }
 
     function updateScoreHistory(score) {
         const now = Date.now();
         proofState.history.push({ score, timestamp: now });
-        if (proofState.history.length > 5000) {
-            proofState.history.shift();
-        }
+        if (proofState.history.length > 5000) proofState.history.shift();
         proofState.historyLength = proofState.history.length;
         if (proofState.history.length >= 2) {
             proofState.historySpanMs = proofState.history[proofState.history.length - 1].timestamp - proofState.history[0].timestamp;
@@ -202,10 +156,8 @@
     async function getNonce() {
         try {
             const response = await fetch(`${CONFIG.nonceUrl}?gameSlug=${encodeURIComponent(CONFIG.gameSlug)}`, {
-                method: 'GET',
-                credentials: 'include'
+                method: 'GET', credentials: 'include'
             });
-
             if (response.ok) {
                 const data = await response.json();
                 if (data.nonce) {
@@ -214,29 +166,23 @@
                     return true;
                 }
             }
-        } catch (e) {
-            log('Nonce request failed:', e.message);
-        }
+        } catch (e) { log('Nonce request failed:', e.message); }
         return false;
     }
 
-    const log = CONFIG.debug
-        ? (...args) => console.log('%c[SP-Score]', 'color: #00c853; font-weight: bold', ...args)
-        : () => {};
+    const log = CONFIG.debug ? (...args) => console.log('%c[SP-Score]', 'color: #00c853; font-weight: bold', ...args) : () => {};
 
-    function processScore(iScore) {
+    function processScore(arg) {
+        const raw = typeof arg === 'object' && arg !== null && 'score' in arg ? arg.score : arg;
         const stack = new Error().stack || '';
         const fromGame = stack.includes('c2runtime');
 
         if (!fromGame) {
-            const raw = (typeof iScore === 'object' && iScore !== null && 'score' in iScore) ? iScore.score : iScore;
-            console.log('%c✅ Memory match complete! Score: ' + raw, 'color: #e91e63; font-weight: bold');
+            console.log('%cMemory match complete! Score: ' + raw, 'color: #e91e63; font-weight: bold');
             return;
         }
 
-        const raw = typeof iScore === 'object' && iScore !== null && 'score' in iScore ? iScore.score : iScore;
         const sanitizedScore = Math.floor(Math.abs(raw)) || 0;
-
         if (sanitizedScore >= CONFIG.minScore) {
             updateScoreHistory(sanitizedScore);
             recordSnapshot(sanitizedScore);
@@ -245,67 +191,43 @@
         }
     }
 
-    window.__ctlArcadeSaveScore = function(arg) {
-        processScore(arg);
-    };
+    window.__ctlArcadeSaveScore = processScore;
 
     try {
         if (window.parent !== window) {
-            window.parent.__ctlArcadeSaveScore = window.__ctlArcadeSaveScore;
+            const win = window;
+            window.parent.__ctlArcadeSaveScore = function(a) { win.__ctlArcadeSaveScore(a); };
         }
     } catch (e) {}
 
     async function sendScore(score) {
         const now = Date.now();
         if (isSending || score < CONFIG.minScore) return false;
-
-        if (score <= lastSentScore) {
-            if ((now - lastSentTime) < CONFIG.cooldownMs) {
-                return false;
-            }
-        }
-
-        if (score === lastFailedScore) {
-            const timeSinceFailure = now - lastFailedTime;
-            if (timeSinceFailure < 10000) {
-                return false;
-            }
-        }
-
-        const failedData = failedAttempts.get(score);
-        if (failedData && failedData.count >= 3) {
-            const timeSinceLastAttempt = now - failedData.lastAttempt;
-            if (timeSinceLastAttempt < 10000) {
-                log('Score failed 3 times, backoff:', score);
-                return false;
-            }
-        }
+        if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) return false;
+        if (score === lastFailedScore && (now - lastFailedTime) < 10000) return false;
+        const fd = failedAttempts.get(score);
+        if (fd && fd.count >= 3 && (now - fd.lastAttempt) < 10000) return false;
 
         if (!currentNonce) {
             const gotNonce = await getNonce();
-            if (!gotNonce) {
-                log('Failed to get nonce, skipping send');
-                return false;
-            }
+            if (!gotNonce) return false;
         }
 
         isSending = true;
         log('Sending score:', score);
 
         if (proofState.visibleStart && !document.hidden) {
-            proofState.visibleMs += now - proofState.visibleStart;
-            proofState.visibleStart = now;
+            proofState.visibleMs += Date.now() - proofState.visibleStart;
+            proofState.visibleStart = Date.now();
         }
         if (proofState.focusStart && document.hasFocus && document.hasFocus()) {
-            proofState.focusMs += now - proofState.focusStart;
-            proofState.focusStart = now;
+            proofState.focusMs += Date.now() - proofState.focusStart;
+            proofState.focusStart = Date.now();
         }
 
-        const currentVisibleMs = proofState.visibleMs + (proofState.visibleStart ? (now - proofState.visibleStart) : 0);
-        const currentFocusMs = proofState.focusMs + (proofState.focusStart ? (now - proofState.focusStart) : 0);
-
+        const currentVisibleMs = proofState.visibleMs + (proofState.visibleStart ? (Date.now() - proofState.visibleStart) : 0);
+        const currentFocusMs = proofState.focusMs + (proofState.focusStart ? (Date.now() - proofState.focusStart) : 0);
         const honeypotTouched = checkHoneypot();
-
         const proofData = {
             visibleMs: Math.min(currentVisibleMs, 43200000),
             focusMs: Math.min(currentFocusMs, 43200000),
@@ -344,53 +266,35 @@
                     resetProof();
                     snapshots = [];
                     lastSnapTime = 0;
-
                     setTimeout(() => getNonce(), 100);
-
                     if (window.parent !== window) {
-                        window.parent.postMessage({
-                            type: 'SP_SCORE_SAVED',
-                            score: score,
-                            result: result,
-                            gameSlug: CONFIG.gameSlug
-                        }, '*');
+                        window.parent.postMessage({ type: 'SP_SCORE_SAVED', score: score, result: result, gameSlug: CONFIG.gameSlug }, '*');
                     }
-
                     if (result.newHighScore) showNotification(score);
                     return true;
                 } else {
                     log('Save failed:', result.error);
-                    const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-                    fd.count++;
-                    fd.lastAttempt = Date.now();
-                    failedAttempts.set(score, fd);
-                    lastFailedScore = score;
-                    lastFailedTime = Date.now();
-                    currentNonce = null;
-
-                    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-                    for (const [s, data] of failedAttempts.entries()) {
-                        if (data.lastAttempt < fiveMinutesAgo) {
-                            failedAttempts.delete(s);
-                        }
-                    }
                 }
             } else {
                 log('HTTP Error:', response.status);
-                const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-                fd.count++;
-                fd.lastAttempt = Date.now();
-                failedAttempts.set(score, fd);
-                lastFailedScore = score;
-                lastFailedTime = Date.now();
-                currentNonce = null;
+            }
+            const f = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
+            f.count++;
+            f.lastAttempt = Date.now();
+            failedAttempts.set(score, f);
+            lastFailedScore = score;
+            lastFailedTime = Date.now();
+            currentNonce = null;
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            for (const [s, data] of failedAttempts.entries()) {
+                if (data.lastAttempt < fiveMinutesAgo) failedAttempts.delete(s);
             }
         } catch (e) {
             log('Error:', e.message);
-            const fd = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
-            fd.count++;
-            fd.lastAttempt = Date.now();
-            failedAttempts.set(score, fd);
+            const f = failedAttempts.get(score) || { count: 0, lastAttempt: 0 };
+            f.count++;
+            f.lastAttempt = Date.now();
+            failedAttempts.set(score, f);
             lastFailedScore = score;
             lastFailedTime = Date.now();
             currentNonce = null;
@@ -405,7 +309,7 @@
         const div = document.createElement('div');
         const lang = document.documentElement.lang || navigator.language || 'en';
         const isArabic = lang.startsWith('ar');
-        const message = isArabic ? '🎉 رقم قياسي!' : '🎉 New High Score!';
+        const message = isArabic ? 'رقم قياسي!' : 'New High Score!';
         const direction = isArabic ? 'rtl' : 'ltr';
         div.innerHTML = message + '<br><b>' + score.toLocaleString() + '</b>';
         div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + direction + ';';
@@ -416,45 +320,13 @@
     async function init() {
         log('Initializing...');
         log('Game:', CONFIG.gameSlug);
-
         initHoneypot();
         startTracking();
-
+        await getNonce();
         await new Promise(r => {
             if (document.readyState === 'complete') r();
             else window.addEventListener('load', r);
         });
-
-        await getNonce();
-
-        window.addEventListener('beforeunload', () => {
-            const lastScore = proofState.history.length > 0
-                ? proofState.history[proofState.history.length - 1].score
-                : 0;
-            if (lastScore >= CONFIG.minScore && lastScore > lastSentScore && currentNonce) {
-                if (snapshots.length === 0 || snapshots[snapshots.length - 1].s !== lastScore) {
-                    snapshots.push({ t: Date.now(), s: lastScore });
-                    if (snapshots.length > SNAP_CONFIG.maxSnapshots) snapshots.shift();
-                }
-                const payload = {
-                    gameSlug: CONFIG.gameSlug,
-                    score: lastScore,
-                    nonce: currentNonce,
-                    proof: {
-                        visibleMs: proofState.visibleMs,
-                        focusMs: proofState.focusMs,
-                        hasInput: proofState.hasInput,
-                        historyLength: proofState.historyLength,
-                        historySpanMs: proofState.historySpanMs
-                    },
-                    honeypotTouched: checkHoneypot(),
-                    snapshots: snapshots.map(s => ({ t: s.t, s: s.s }))
-                };
-                const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-                navigator.sendBeacon?.(CONFIG.apiUrl, blob);
-            }
-        });
-
         log('Ready!');
     }
 
