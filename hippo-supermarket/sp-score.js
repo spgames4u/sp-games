@@ -286,7 +286,7 @@
         const div = document.createElement('div');
         const lang = document.documentElement.lang || navigator.language || 'en';
         const isArabic = lang.startsWith('ar');
-        const message = isArabic ? 'رقم قياسي!' : 'New High Score!';
+        const message = isArabic ? '\u0631\u0642\u0645 \u0642\u064a\u0627\u0633\u064a!' : 'New High Score!';
         const direction = isArabic ? 'rtl' : 'ltr';
         div.innerHTML = message + '<br><b>' + score.toLocaleString() + '</b>';
         div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + direction + ';';
@@ -299,7 +299,7 @@
         const div = document.createElement('div');
         const lang = document.documentElement.lang || navigator.language || 'en';
         const isArabic = lang.startsWith('ar');
-        const message = isNewHigh ? (isArabic ? 'رقم قياسي!' : 'New High Score!') : (isArabic ? 'تم حفظ نتيجتك' : 'Score saved');
+        const message = isNewHigh ? (isArabic ? '\u0631\u0642\u0645 \u0642\u064a\u0627\u0633\u064a!' : 'New High Score!') : (isArabic ? '\u062a\u0645 \u062d\u0641\u0638 \u0646\u062a\u064a\u062c\u062a\u0643' : 'Score saved');
         const direction = isArabic ? 'rtl' : 'ltr';
         div.innerHTML = message + '<br><b>' + score.toLocaleString() + '</b>';
         div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 24px;border-radius:25px;font:bold 14px Arial;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999999;direction:' + direction + ';';
