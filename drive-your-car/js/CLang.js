@@ -1,0 +1,15 @@
+TEXT_SCORE = "SCORE";
+TEXT_GAME_OVER = "GAME OVER";
+TEXT_JUMP = "JUMP";
+TEXT_PLAY = "PLAY";
+TEXT_HELP1 = "AVOID THE OPPOSING CARS CLICKING THE ARROWS OR THE JUMP BUTTON";
+TEXT_HELP2 = "TRY TO DRIVE AS LONG AS POSSIBLE";
+var TEXT_CREDITS_DEVELOPED = "Presented By";
+var TEXT_PRELOADER_CONTINUE = "START";
+
+TEXT_SHARE_IMAGE = "200x200.jpg";
+TEXT_SHARE_TITLE = "Congratulations!";
+TEXT_SHARE_MSG1 = "You collected <strong>";
+TEXT_SHARE_MSG2 = " points</strong>!<br><br>Share your score with your friends!";
+TEXT_SHARE_SHARE1 = "My score is ";
+TEXT_SHARE_SHARE2 = " points! Can you do better?";
