@@ -18,6 +18,16 @@
     }
     window[guardKey] = true;
     
+    const _origEval = window.eval;
+    window.eval = function(x) {
+        if (typeof x === 'string' && x.indexOf('parent.__ctlArcadeSaveScore') !== -1) {
+            x = x.replace(/parent\.__ctlArcadeSaveScore/g, 'window.__ctlArcadeSaveScore')
+                  .replace(/parent\.drftgyhunjmkythgbrfcdshnjikmo1f/g, 'window.drftgyhunjmkythgbrfcdshnjikmo1f')
+                  .replace(/parent\._oCtlArcadeIframeGlobalData/g, 'window._oCtlArcadeIframeGlobalData');
+        }
+        return _origEval.call(this, x);
+    };
+    
     window._oCtlArcadeIframeGlobalData = window._oCtlArcadeIframeGlobalData || {};
     window._oCtlArcadeIframeGlobalData.game_dir = gameSlugFallback;
     window.drftgyhunjmkythgbrfcdshnjikmo1f = function(x) { return String(x); };
