@@ -387,38 +387,12 @@
         return null;
     }
 
-    function interceptPostMessage() {
-        const parent = window.parent;
-        const origPostMessage = parent.postMessage.bind(parent);
-        parent.postMessage = function(msg, targetOrigin) {
-            if (msg && typeof msg === 'object' && msg.type === 'sg-game-event' && msg.eventName === 'levelFinish' && typeof msg.data === 'object') {
-                const stack = new Error().stack || '';
-                const fromGame = stack.includes('main.') || stack.includes('cocos2d') || stack.includes('index.');
-                if (fromGame) {
-                    (async () => {
-                        let level = typeof msg.data.level === 'number' ? msg.data.level : (typeof msg.data.level === 'string' ? parseInt(msg.data.level, 10) : NaN);
-                        if (isNaN(level) || level <= 0) level = detectLevel();
-                        if (level === null || level <= 0) level = await decompressAndGetLevel();
-                        const sanitizedScore = (level !== null && !isNaN(level) && level > 0) ? (Math.floor(level) * 1000) : 0;
-                        if (sanitizedScore >= CONFIG.minScore) {
-                            updateScoreHistory(sanitizedScore);
-                            recordSnapshot(sanitizedScore);
-                            if (proofState.hasInput) sendScore(sanitizedScore);
-                        }
-                    })();
-                }
-            }
-            origPostMessage(msg, targetOrigin);
-        };
-    }
-
     async function init() {
         log('Initializing...');
         log('Game:', CONFIG.gameSlug);
 
         initHoneypot();
         startTracking();
-        interceptPostMessage();
         await getNonce();
 
         await new Promise(r => {
