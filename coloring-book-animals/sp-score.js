@@ -25,27 +25,29 @@
         return _origEval.call(this, x);
     };
 
+    var _host = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:4000' : 'https://new.sp.games';
     const CONFIG = {
-        apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://localhost:4000/api/games/save-score'
-            : 'https://new.sp.games/api/games/save-score',
-        nonceUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://localhost:4000/api/games/nonce'
-            : 'https://new.sp.games/api/games/nonce',
+        apiUrl: _host + '/api/games/save-score',
+        nonceUrl: _host + '/api/games/nonce',
+        myScoreUrl: _host + '/api/games/',
         gameSlug: getGameSlug(),
         minScore: 1,
         cooldownMs: 60000,
         engagementMs: 60000,
         scorePerBlock: 100,
-        drawZoneXMin: 0.2,
-        drawZoneXMax: 0.8,
-        drawZoneYMin: 0.2,
-        drawZoneYMax: 0.72,
+        additive: true,
+        drawZoneXMin: 0.15,
+        drawZoneXMax: 0.85,
+        drawZoneYMin: 0.15,
+        drawZoneYMax: 0.78,
         debug: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
     };
 
     let drawingMs = 0;
     let drawingStartTime = null;
+    let hoverMs = 0;
+    let hoverStartTime = null;
+    var HOVER_FACTOR = 0.5;
 
     let lastSentScore = 0;
     let lastSentTime = 0;
@@ -54,14 +56,7 @@
     let failedAttempts = new Map();
     let lastFailedScore = null;
     let lastFailedTime = 0;
-    var lastScoreKey = 'sp_score_last_' + getGameSlug();
-    var lastEngagementScore = (function() {
-        try {
-            var v = parseInt(localStorage.getItem(lastScoreKey), 10);
-            return (v >= 0 && v < 1e9) ? v : 0;
-        } catch (e) { return 0; }
-    })();
-
+    var lastSentBlock = 0;
     let proofState = {
         visibleStart: null,
         visibleMs: 0,
@@ -142,6 +137,10 @@
                     if (el >= 200) drawingMs += el;
                     drawingStartTime = null;
                 }
+                if (hoverStartTime) {
+                    hoverMs += (Date.now() - hoverStartTime) * HOVER_FACTOR;
+                    hoverStartTime = null;
+                }
             } else proofState.visibleStart = Date.now();
         });
         window.addEventListener('focus', () => { proofState.focusStart = Date.now(); });
@@ -200,6 +199,13 @@
         }
     }
 
+    function stopHover() {
+        if (hoverStartTime && !drawingStartTime) {
+            hoverMs += (Date.now() - hoverStartTime) * HOVER_FACTOR;
+            hoverStartTime = null;
+        }
+    }
+
     function startDrawingTracking() {
         var canvas = document.getElementById('interactivecanvas');
         if (!canvas) return;
@@ -207,24 +213,57 @@
             if (e.touches && e.touches.length) {
                 return { x: e.touches[0].clientX, y: e.touches[0].clientY };
             }
+            if (e.changedTouches && e.changedTouches.length) {
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
             return { x: e.clientX, y: e.clientY };
         }
         function onDown(e) {
             var c = getCoord(e);
             if (inDrawZone(canvas, c.x, c.y)) {
                 if (!proofState.hasInput) proofState.hasInput = true;
+                stopHover();
                 drawingStartTime = Date.now();
+            } else {
+                stopHover();
             }
         }
-        function onUp() {
+        function onUp(e) {
             stopDrawing();
+            if (e) {
+                var c = getCoord(e);
+                if (c && c.x != null && inDrawZone(canvas, c.x, c.y)) {
+                    hoverStartTime = Date.now();
+                }
+            }
+        }
+        function onMove(e) {
+            var c = getCoord(e);
+            if (!c || (c.x == null && c.y == null)) return;
+            if (!drawingStartTime && inDrawZone(canvas, c.x, c.y) && proofState.hasInput) {
+                if (!hoverStartTime) hoverStartTime = Date.now();
+            } else if (hoverStartTime && !inDrawZone(canvas, c.x, c.y)) {
+                stopHover();
+            }
+        }
+        function onLeave() {
+            stopDrawing();
+            stopHover();
         }
         canvas.addEventListener('mousedown', onDown, { passive: true });
         canvas.addEventListener('mouseup', onUp, { passive: true });
-        canvas.addEventListener('mouseleave', onUp, { passive: true });
+        canvas.addEventListener('mouseleave', onLeave, { passive: true });
+        canvas.addEventListener('mousemove', onMove, { passive: true });
         canvas.addEventListener('touchstart', onDown, { passive: true });
         canvas.addEventListener('touchend', onUp, { passive: true });
-        canvas.addEventListener('touchcancel', onUp, { passive: true });
+        canvas.addEventListener('touchcancel', onLeave, { passive: true });
+        canvas.addEventListener('touchmove', onMove, { passive: true });
+        if (window.PointerEvent) {
+            canvas.addEventListener('pointerdown', onDown, { passive: true });
+            canvas.addEventListener('pointerup', onUp, { passive: true });
+            canvas.addEventListener('pointerleave', onLeave, { passive: true });
+            canvas.addEventListener('pointermove', onMove, { passive: true });
+        }
     }
 
     function updateScoreHistory(score) {
@@ -235,6 +274,18 @@
         if (proofState.history.length >= 2) {
             proofState.historySpanMs = proofState.history[proofState.history.length - 1].timestamp - proofState.history[0].timestamp;
         }
+    }
+
+    async function getCurrentScore() {
+        try {
+            var r = await fetch(CONFIG.myScoreUrl + CONFIG.gameSlug + '/my-score', { method: 'GET', credentials: 'include' });
+            if (r.ok) {
+                var d = await r.json();
+                var s = parseInt(d.score, 10);
+                return (s >= 0 && s < 1e9) ? s : 0;
+            }
+        } catch (e) {}
+        return 0;
     }
 
     async function getNonce() {
@@ -257,19 +308,37 @@
     const log = CONFIG.debug ? (...args) => console.log('%c[SP-Score]', 'color: #00c853; font-weight: bold', ...args) : () => {};
 
     function checkEngagement() {
-        var currentDrawingMs = drawingMs + (drawingStartTime ? Date.now() - drawingStartTime : 0);
+        var currentHoverMs = hoverMs + (hoverStartTime && !drawingStartTime ? (Date.now() - hoverStartTime) * HOVER_FACTOR : 0);
+        var currentDrawingMs = drawingMs + (drawingStartTime ? Date.now() - drawingStartTime : 0) + currentHoverMs;
         if (currentDrawingMs < CONFIG.engagementMs) return;
         if (!proofState.hasInput) return;
-        const blocks = Math.floor(currentDrawingMs / CONFIG.engagementMs);
-        if (blocks < 1) return;
-        const score = blocks * CONFIG.scorePerBlock;
-        if (score <= lastEngagementScore) return;
-        lastEngagementScore = score;
-        updateScoreHistory(score);
-        recordSnapshot(score);
-        sendScore(score).then(function(ok) {
-            if (ok) showEngagementToast(score);
-        });
+        var blocks = Math.floor(currentDrawingMs / CONFIG.engagementMs);
+        if (blocks <= lastSentBlock) return;
+        lastSentBlock = blocks;
+        var increment = CONFIG.scorePerBlock;
+        if (CONFIG.additive) {
+            function doSend(scoreToSend) {
+                updateScoreHistory(scoreToSend);
+                recordSnapshot(scoreToSend);
+                sendScore(scoreToSend).then(function(res) {
+                    if (res) showEngagementToast(typeof res === 'object' && res.currentBest !== undefined ? res.currentBest : scoreToSend);
+                });
+            }
+            if (lastSentScore > 0) {
+                doSend(lastSentScore + increment);
+            } else {
+                getCurrentScore().then(function(current) {
+                    doSend(current + increment);
+                });
+            }
+        } else {
+            var score = blocks * increment;
+            updateScoreHistory(score);
+            recordSnapshot(score);
+            sendScore(score).then(function(res) {
+                if (res) showEngagementToast(typeof res === 'object' && res.currentBest !== undefined ? res.currentBest : score);
+            });
+        }
     }
 
     function showEngagementToast(score) {
@@ -301,7 +370,7 @@
     async function sendScore(score) {
         const now = Date.now();
         if (isSending || score < CONFIG.minScore) return false;
-        if (score <= lastSentScore && (now - lastSentTime) < CONFIG.cooldownMs) return false;
+        if ((now - lastSentTime) < CONFIG.cooldownMs) return false;
         if (score === lastFailedScore && (now - lastFailedTime) < 10000) return false;
         const fd = failedAttempts.get(score);
         if (fd && fd.count >= 3 && (now - fd.lastAttempt) < 10000) return false;
@@ -356,12 +425,10 @@
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.ok !== false) {
+                if (result.ok !== false && result.success !== false) {
                     log('Score saved!', result);
                     lastSentScore = score;
                     lastSentTime = now;
-                    lastEngagementScore = score;
-                    try { localStorage.setItem(lastScoreKey, String(score)); } catch (e) {}
                     currentNonce = null;
                     resetProof();
                     snapshots = [];
@@ -371,7 +438,7 @@
                         window.parent.postMessage({ type: 'SP_SCORE_SAVED', score: score, result: result, gameSlug: CONFIG.gameSlug }, '*');
                     }
                     if (result.newHighScore) showNotification(score);
-                    return true;
+                    return { currentBest: result.currentBest };
                 } else {
                     log('Save failed:', result.error);
                 }
