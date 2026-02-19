@@ -54,7 +54,13 @@
     let failedAttempts = new Map();
     let lastFailedScore = null;
     let lastFailedTime = 0;
-    let lastEngagementScore = 0;
+    var lastScoreKey = 'sp_score_last_' + getGameSlug();
+    var lastEngagementScore = (function() {
+        try {
+            var v = parseInt(localStorage.getItem(lastScoreKey), 10);
+            return (v >= 0 && v < 1e9) ? v : 0;
+        } catch (e) { return 0; }
+    })();
 
     let proofState = {
         visibleStart: null,
@@ -354,6 +360,8 @@
                     log('Score saved!', result);
                     lastSentScore = score;
                     lastSentTime = now;
+                    lastEngagementScore = score;
+                    try { localStorage.setItem(lastScoreKey, String(score)); } catch (e) {}
                     currentNonce = null;
                     resetProof();
                     snapshots = [];
