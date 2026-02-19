@@ -9,7 +9,7 @@
         const params = new URLSearchParams(location.search);
         if (params.get('gameSlug')) return params.get('gameSlug');
         const parts = location.pathname.split('/').filter(Boolean);
-        return parts[parts.length - 1] || 'air-war-1945';
+        return parts[parts.length - 1] || 'air-war-1941';
     }
 
     const guardKey = '__SP_SCORE_RUNNING_' + getGameSlug();
@@ -119,7 +119,7 @@
             document.addEventListener(event, () => { if (!proofState.hasInput) proofState.hasInput = true; }, { once: false, passive: true, capture: true });
         });
         if (window.parent !== window) {
-            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games'];
+            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games', 'https://games.sp.games'];
             window.addEventListener('message', (e) => {
                 let originAllowed = false;
                 try {
@@ -318,8 +318,7 @@
 
         await getNonce();
 
-        const target = (window.parent !== window) ? window.parent : window;
-        target.__ctlArcadeSaveScore = handleScore;
+        window.__ctlArcadeSaveScore = handleScore;
 
         const cleanup = () => { delete window[guardKey]; };
         window.addEventListener('pagehide', cleanup);
