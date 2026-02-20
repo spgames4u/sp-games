@@ -1,0 +1,41 @@
+window._CCSettings = {
+    platform: "web-mobile",
+    groupList: ["default", "wall", "platform", "actor", "collider", "ui", "3d", "room", "screenshot", "fire", "prop", "New Group 13"],
+    collisionMatrix: [
+        [false],
+        [false, false, null, false, false],
+        [false, false, false, false, false, null, null, null, null, false, false],
+        [false, false, false, false, false],
+        [false, false, false, false, false, null, null, null, null, false],
+        [false, false, false, false, false, false],
+        [false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false, false, false]
+    ],
+    hasResourcesBundle: true,
+    hasStartSceneBundle: false,
+    remoteBundles: [],
+    subpackages: [],
+    launchScene: "db://assets/main.fire",
+    orientation: "portrait",
+    jsList: ["assets/scripts/Init Engine.799be.js"],
+    bundleVers: {
+        internal: "d0832",
+        resources: "e0338",
+        copyhub: "77ddb",
+        freeChange: "c3bd9",
+        game: "78064",
+        gameend: "fa0b2",
+        gamestar: "d56c9",
+        hub: "fa138",
+        loading: "4e852",
+        lottery: "9050d",
+        setting: "6059a",
+        sign: "6444f",
+        task: "69687",
+        main: "f2e59"
+    }
+};
