@@ -65,6 +65,10 @@
         window.addEventListener('message', handleMessage);
         
         // إعلام الصفحة الأم أن اللعبة جاهزة
+        var readyTimer = setInterval(function() { sendToParent({ type: 'ready' }); }, 500);
+        window.addEventListener('message', function once(e) {
+            if (e.data && e.data.type === 'question') { clearInterval(readyTimer); window.removeEventListener('message', once); }
+        });
         sendToParent({ type: 'ready' });
         
         console.log('[Who Am I] Game initialized, lang:', lang);

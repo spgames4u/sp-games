@@ -40,6 +40,10 @@
         document.addEventListener('touchend', onEnd, { passive: false });
         document.addEventListener('touchmove', onTM, { passive: false });
         window.addEventListener('resize', function () { if (curQ && !wait) posSVG(); });
+        var readyTimer = setInterval(function() { post({ type: 'ready' }); }, 500);
+        window.addEventListener('message', function once(e) {
+            if (e.data && e.data.type === 'question') { clearInterval(readyTimer); window.removeEventListener('message', once); }
+        });
         post({ type: 'ready' });
     }
 
