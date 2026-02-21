@@ -25,7 +25,7 @@
         return _origEval.call(this, x);
     };
 
-    var _host = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:4000' : 'https://new.sp.games';
+    var _host = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:4000' : 'https://sp.games';
     const CONFIG = {
         apiUrl: _host + '/api/games/save-score',
         nonceUrl: _host + '/api/games/nonce',
@@ -154,7 +154,7 @@
             document.addEventListener(event, () => { if (!proofState.hasInput) proofState.hasInput = true; }, { once: false, passive: true, capture: true });
         });
         if (window.parent !== window) {
-            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games'];
+            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://sp.games'];
             window.addEventListener('message', (e) => {
                 let originAllowed = false;
                 try {

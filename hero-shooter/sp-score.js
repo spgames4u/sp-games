@@ -23,10 +23,10 @@
     const CONFIG = {
         apiUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
             ? 'http://localhost:4000/api/games/save-score'
-            : 'https://new.sp.games/api/games/save-score',
+            : 'https://sp.games/api/games/save-score',
         nonceUrl: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
             ? 'http://localhost:4000/api/games/nonce'
-            : 'https://new.sp.games/api/games/nonce',
+            : 'https://sp.games/api/games/nonce',
         gameSlug: getGameSlug(),
         minScore: 1,
         cooldownMs: 30000,
@@ -131,7 +131,7 @@
             }, { once: false, passive: true, capture: true });
         });
         if (window.parent !== window) {
-            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://new.sp.games'];
+            const allowedOrigins = ['http://localhost:4000', 'http://127.0.0.1:4000', 'https://sp.games', 'https://sp.games'];
             window.addEventListener('message', (e) => {
                 let originAllowed = false;
                 try {
