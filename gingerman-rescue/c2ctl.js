@@ -1,6 +1,6 @@
  function ctlArcadeSaveScore(iScore){
-        if(parent.__ctlArcadeSaveScore){
-            parent.__ctlArcadeSaveScore({score:iScore});
+        if(typeof window.__ctlArcadeSaveScore === 'function'){
+            window.__ctlArcadeSaveScore({score:iScore});
         }
     }
 
@@ -53,8 +53,8 @@
             }
             lvl = Math.min(Math.max(lvl, 1), 15);
         } catch (e) {}
-        if (lvl > 0 && parent.__ctlArcadeSaveScore) {
-            parent.__ctlArcadeSaveScore({ score: lvl * 100, level: lvl });
+        if (lvl > 0 && typeof window.__ctlArcadeSaveScore === 'function') {
+            window.__ctlArcadeSaveScore({ score: lvl * 100, level: lvl });
         }
         if (typeof window.__SP_OnLevelEnd === 'function') {
             window.__SP_OnLevelEnd();
